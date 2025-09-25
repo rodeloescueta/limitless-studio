@@ -1,0 +1,33 @@
+# Dependencies
+node_modules
+npm-debug.log*
+
+# Next.js build outputs
+.next/
+out/
+
+# Development files
+.env*.local
+.env.local
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+README.md
+
+# Testing
+coverage/
+.nyc_output/
+jest.config.js
+
+# Temporary files
+*.tmp
+*.temp

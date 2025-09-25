@@ -1,0 +1,37 @@
+{
+  "name": "content-reach-hub",
+  "version": "1.0.0",
+  "description": "Content Operating System for content creation agencies",
+  "main": "index.js",
+  "scripts": {
+    "dev": "docker compose --env-file .env.local -f docker-compose.dev.yml up",
+    "dev:down": "docker compose -f docker-compose.dev.yml down",
+    "dev:build": "docker compose --env-file .env.local -f docker-compose.dev.yml up --build",
+    "dev:logs": "docker compose -f docker-compose.dev.yml logs -f web",
+    "dev:logs:db": "docker compose -f docker-compose.dev.yml logs -f db",
+    "prod": "docker compose --env-file .env.local up --build",
+    "prod:down": "docker compose down",
+    "prod:logs": "docker compose logs -f web",
+    "clean": "docker compose -f docker-compose.dev.yml down -v && docker system prune -f",
+    "rebuild": "docker compose -f docker-compose.dev.yml down && docker compose --env-file .env.local -f docker-compose.dev.yml up --build",
+    "db:connect": "docker compose -f docker-compose.dev.yml exec db psql -U postgres -d content_reach_hub",
+    "pgadmin": "echo 'pgAdmin: http://localhost:8080 (admin@example.com / adminDev123!)'"
+  },
+  "keywords": [
+    "content",
+    "management",
+    "kanban",
+    "agency",
+    "collaboration"
+  ],
+  "author": "Content Reach Hub Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/your-org/content-reach-hub.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/content-reach-hub/issues"
+  },
+  "homepage": "https://github.com/your-org/content-reach-hub#readme"
+}
