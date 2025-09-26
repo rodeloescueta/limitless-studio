@@ -2,10 +2,10 @@ services:
   # Next.js Frontend Application
   web:
     env_file:
-      - .env.local
+      - .env
     build:
       context: ./frontend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     ports:
       - "3000:3000"
     environment:
@@ -27,7 +27,7 @@ services:
   # PostgreSQL Database
   db:
     env_file:
-      - .env.local
+      - .env
     image: postgres:15-alpine
     environment:
       - POSTGRES_DB=${POSTGRES_DB}
@@ -52,7 +52,7 @@ services:
   # pgAdmin for Database Administration
   pgadmin:
     env_file:
-      - .env.local
+      - .env
     image: dpage/pgadmin4:latest
     environment:
       - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
