@@ -17,7 +17,7 @@ export const authOptions: NextAuthOptions = {
             credentials?.password === '7ba42eee'
           ) {
             return {
-              id: '1',
+              id: 'da898ec3-0580-4a45-8ec1-319c59e6c1a6',
               email: 'admin@contentreach.local',
               name: 'Admin User',
               role: 'admin',
@@ -46,7 +46,7 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       if (token) {
-        session.user.id = token.sub || '1'
+        session.user.id = token.sub || 'da898ec3-0580-4a45-8ec1-319c59e6c1a6'
         session.user.role = token.role as string || 'admin'
         session.user.isFirstLogin = token.isFirstLogin as boolean || false
       }
