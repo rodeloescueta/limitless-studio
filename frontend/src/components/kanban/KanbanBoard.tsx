@@ -102,7 +102,7 @@ export function KanbanBoard({ teamId }: KanbanBoardProps) {
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex gap-6 p-6 overflow-x-auto min-h-screen bg-gray-50">
+      <div className="flex gap-6 p-6 overflow-x-auto min-h-screen bg-background">
         {stages.map((stage) => (
           <KanbanColumn
             key={stage.id}
@@ -127,9 +127,9 @@ export function KanbanBoard({ teamId }: KanbanBoardProps) {
 
 function KanbanBoardSkeleton() {
   return (
-    <div className="flex gap-6 p-6 overflow-x-auto min-h-screen bg-gray-50">
+    <div className="flex gap-6 p-6 overflow-x-auto min-h-screen bg-background">
       {[1, 2, 3, 4, 5].map((i) => (
-        <div key={i} className="w-80 bg-white rounded-lg shadow-sm border">
+        <div key={i} className="w-80 bg-card rounded-lg shadow-sm border">
           <div className="p-4 border-b">
             <Skeleton className="h-6 w-24 mb-2" />
             <Skeleton className="h-4 w-16" />

@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Shield, Settings, LogOut } from 'lucide-react'
+import { ModeToggle } from '@/components/mode-toggle'
 import type { Team } from '@/lib/api-client'
 
 interface DashboardHeaderProps {
@@ -32,14 +33,14 @@ export function DashboardHeader({ selectedTeamId, teams, onTeamChange }: Dashboa
   const selectedTeam = teams.find(t => t.id === selectedTeamId)
 
   return (
-    <header className="border-b bg-white px-6 py-4">
+    <header className="border-b bg-background px-6 py-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 shadow-sm">
               <Shield className="h-4 w-4 text-white" />
             </div>
-            <h1 className="text-xl font-semibold text-gray-900">Content Reach Hub</h1>
+            <h1 className="text-xl font-semibold text-foreground">Content Reach Hub</h1>
           </div>
 
           <Select value={selectedTeamId} onValueChange={onTeamChange}>
@@ -54,7 +55,7 @@ export function DashboardHeader({ selectedTeamId, teams, onTeamChange }: Dashboa
                   <div>
                     <div className="font-medium">{team.name}</div>
                     {team.description && (
-                      <div className="text-xs text-gray-500 line-clamp-1">
+                      <div className="text-xs text-muted-foreground line-clamp-1">
                         {team.description}
                       </div>
                     )}
@@ -69,6 +70,8 @@ export function DashboardHeader({ selectedTeamId, teams, onTeamChange }: Dashboa
           <Button variant="outline" size="sm">
             Create Card
           </Button>
+
+          <ModeToggle />
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

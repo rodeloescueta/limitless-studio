@@ -50,8 +50,8 @@ export default function DashboardPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">No Teams Available</h2>
-          <p className="text-gray-600">
+          <h2 className="text-xl font-semibold text-foreground mb-2">No Teams Available</h2>
+          <p className="text-muted-foreground">
             You're not a member of any teams yet. Contact your administrator to get access.
           </p>
         </div>
@@ -88,7 +88,7 @@ function DashboardSkeleton() {
   return (
     <div className="flex flex-col h-screen">
       {/* Header skeleton */}
-      <div className="border-b bg-white px-6 py-4">
+      <div className="border-b bg-background px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Skeleton className="h-6 w-48" />
@@ -102,9 +102,9 @@ function DashboardSkeleton() {
       </div>
 
       {/* Board skeleton */}
-      <div className="flex gap-6 p-6 overflow-x-auto min-h-screen bg-gray-50">
+      <div className="flex gap-6 p-6 overflow-x-auto min-h-screen bg-background">
         {[1, 2, 3, 4, 5].map((i) => (
-          <div key={i} className="w-80 bg-white rounded-lg shadow-sm border">
+          <div key={i} className="w-80 bg-card rounded-lg shadow-sm border">
             <div className="p-4 border-b">
               <Skeleton className="h-6 w-24 mb-2" />
               <Skeleton className="h-4 w-16" />

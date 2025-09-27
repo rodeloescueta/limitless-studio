@@ -9,7 +9,12 @@ export default function Providers({ children }: { children: ReactNode }) {
   return (
     <SessionProvider>
       <QueryProvider>
-        <ThemeProvider attribute='class'>
+        <ThemeProvider
+          attribute='class'
+          defaultTheme='light'
+          enableSystem
+          disableTransitionOnChange
+        >
           {children}
         </ThemeProvider>
       </QueryProvider>
