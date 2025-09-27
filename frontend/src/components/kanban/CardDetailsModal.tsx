@@ -33,6 +33,7 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useCardDetails, useUpdateCard, useDeleteCard } from '@/lib/hooks/useCards'
+import { CommentsPanel } from '@/components/comments/CommentsPanel'
 import { format } from 'date-fns'
 import { CalendarIcon, TrashIcon } from 'lucide-react'
 
@@ -156,7 +157,7 @@ export function CardDetailsModal({ cardId, isOpen, onClose }: CardDetailsModalPr
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="content">Content</TabsTrigger>
-            <TabsTrigger value="activity">Activity</TabsTrigger>
+            <TabsTrigger value="comments">Comments</TabsTrigger>
           </TabsList>
 
           <div className="mt-4 overflow-y-auto flex-1">
@@ -327,10 +328,8 @@ export function CardDetailsModal({ cardId, isOpen, onClose }: CardDetailsModalPr
               </Form>
             </TabsContent>
 
-            <TabsContent value="activity">
-              <div className="text-center py-8 text-gray-500">
-                <p>Activity tracking coming soon...</p>
-              </div>
+            <TabsContent value="comments" className="h-full">
+              <CommentsPanel cardId={cardId} />
             </TabsContent>
           </div>
         </Tabs>

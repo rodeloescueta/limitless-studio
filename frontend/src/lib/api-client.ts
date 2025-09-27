@@ -101,6 +101,30 @@ class ApiClient {
         method: 'PUT',
         body: JSON.stringify({ stageId, position }),
       }),
+
+    // Comments
+    getComments: (cardId: string) =>
+      this.request<Comment[]>(`/cards/${cardId}/comments`),
+
+    createComment: (cardId: string, data: CreateCommentData) =>
+      this.request<Comment>(`/cards/${cardId}/comments`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+  }
+
+  // Comments API
+  comments = {
+    update: (commentId: string, data: UpdateCommentData) =>
+      this.request<Comment>(`/comments/${commentId}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
+
+    delete: (commentId: string) =>
+      this.request<void>(`/comments/${commentId}`, {
+        method: 'DELETE',
+      }),
   }
 
   // Users API
@@ -172,6 +196,53 @@ export interface CreateCardData {
 
 export interface UpdateCardData extends Partial<CreateCardData> {
   title?: string
+}
+
+export interface Comment {
+  id: string
+  content: string
+  mentions?: string[]
+  parentCommentId?: string
+  createdAt: string
+  updatedAt: string
+  user: {
+    id: string
+    firstName: string
+    lastName: string
+    email: string
+    avatar?: string
+  }
+}
+
+export interface CreateCommentData {
+  content: string
+  mentions?: string[]
+  parentCommentId?: string
+}
+
+export interface UpdateCommentData {
+  content: string
+}
+
+export interface CommentMention {
+  id: string
+  isRead: boolean
+  createdAt: string
+  comment: {
+    id: string
+    content: string
+    createdAt: string
+    user: {
+      id: string
+      firstName: string
+      lastName: string
+      avatar?: string
+    }
+  }
+  card: {
+    id: string
+    title: string
+  }
 }
 
 export { ApiError }
