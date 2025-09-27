@@ -45,6 +45,7 @@ export function KanbanColumn({ stage, cards, teamId }: KanbanColumnProps) {
         className={`p-4 space-y-3 min-h-[500px] flex-1 transition-colors ${
           isOver ? 'bg-accent' : ''
         }`}
+        data-stage-id={stage.id}
       >
         <SortableContext
           items={cards.map(c => c.id)}

@@ -11,7 +11,7 @@ const moveCardSchema = z.object({
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { cardId: string } }
+  { params }: { params: Promise<{ cardId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -25,7 +25,9 @@ export async function PUT(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const card = await getContentCard(params.cardId)
+    const { cardId } = await params
+
+    const card = await getContentCard(cardId)
     if (!card) {
       return NextResponse.json({ error: 'Card not found' }, { status: 404 })
     }
@@ -39,7 +41,7 @@ export async function PUT(
     const body = await request.json()
     const { stageId, position } = moveCardSchema.parse(body)
 
-    const movedCard = await moveContentCard(params.cardId, stageId, position)
+    const movedCard = await moveContentCard(cardId, stageId, position)
     return NextResponse.json(movedCard)
 
   } catch (error) {

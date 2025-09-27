@@ -1,6 +1,6 @@
 'use client'
 
-import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
+import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors, pointerWithin, rectIntersection, closestCenter } from '@dnd-kit/core'
 import { SortableContext, arrayMove } from '@dnd-kit/sortable'
 import { useState } from 'react'
 import { useTeamCards } from '@/lib/hooks/useCards'
@@ -30,6 +30,36 @@ export function KanbanBoard({ teamId }: KanbanBoardProps) {
     })
   )
 
+  // Custom collision detection that prioritizes stage containers over cards
+  const customCollisionDetection = (args: any) => {
+    console.log('Custom collision detection called')
+
+    // First, check for collisions with stage containers (droppable areas)
+    const stageCollisions = rectIntersection({
+      ...args,
+      droppableContainers: args.droppableContainers.filter(
+        (container: any) => container.data.current?.type === 'stage'
+      ),
+    })
+
+    console.log('Stage collisions:', stageCollisions)
+
+    if (stageCollisions.length > 0) {
+      return stageCollisions
+    }
+
+    // If no stage collisions, check for card collisions within the same stage
+    const cardCollisions = closestCenter({
+      ...args,
+      droppableContainers: args.droppableContainers.filter(
+        (container: any) => container.data.current?.type === 'card'
+      ),
+    })
+
+    console.log('Card collisions:', cardCollisions)
+    return cardCollisions
+  }
+
   const handleDragStart = (event: DragStartEvent) => {
     const card = cards.find(c => c.id === event.active.id)
     setActiveCard(card || null)
@@ -39,36 +69,68 @@ export function KanbanBoard({ teamId }: KanbanBoardProps) {
     const { active, over } = event
     setActiveCard(null)
 
-    if (!over || active.id === over.id) {
+    console.log('Drag end:', {
+      activeId: active.id,
+      overId: over?.id,
+      overData: over?.data?.current
+    })
+
+    if (!over) {
+      console.log('Drag cancelled: no target')
       return
     }
 
     const sourceCard = cards.find(c => c.id === active.id)
-    if (!sourceCard) return
+    if (!sourceCard) {
+      console.log('Source card not found')
+      return
+    }
 
-    // Get the target stage ID
+    // Get the target stage ID and position
     let targetStageId: string
     let targetPosition: number
 
     if (over.data.current?.type === 'stage') {
-      // Dropped on empty stage
+      // Dropped directly on a stage (empty area)
       targetStageId = over.id as string
       targetPosition = 1
-    } else {
-      // Dropped on or near another card
+      console.log('Dropped on stage:', targetStageId)
+    } else if (over.data.current?.type === 'card') {
+      // Dropped on another card
       const targetCard = cards.find(c => c.id === over.id)
       if (targetCard) {
         targetStageId = targetCard.stageId
         targetPosition = targetCard.position
+        console.log('Dropped on card:', over.id, 'in stage:', targetStageId)
       } else {
+        console.log('Target card not found')
+        return
+      }
+    } else {
+      // Try to find stage from DOM hierarchy
+      console.log('Fallback: trying to detect stage from over element')
+      const stageId = over.id as string
+      const stage = stages.find(s => s.id === stageId)
+      if (stage) {
+        targetStageId = stageId
+        targetPosition = cards.filter(c => c.stageId === stageId).length + 1
+      } else {
+        console.log('Could not determine target stage')
         return
       }
     }
 
     // Don't move if it's the same position
     if (sourceCard.stageId === targetStageId && sourceCard.position === targetPosition) {
+      console.log('Same position, no move needed')
       return
     }
+
+    console.log('Moving card:', {
+      cardId: sourceCard.id,
+      from: { stageId: sourceCard.stageId, position: sourceCard.position },
+      to: { stageId: targetStageId, position: targetPosition }
+    })
 
     try {
       await moveCard.mutateAsync({
@@ -76,6 +138,7 @@ export function KanbanBoard({ teamId }: KanbanBoardProps) {
         stageId: targetStageId,
         position: targetPosition,
       })
+      console.log('Card moved successfully')
     } catch (error) {
       console.error('Failed to move card:', error)
     }
@@ -101,6 +164,7 @@ export function KanbanBoard({ teamId }: KanbanBoardProps) {
       sensors={sensors}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
+      collisionDetection={customCollisionDetection}
     >
       <div className="flex gap-6 p-6 overflow-x-auto min-h-screen bg-background">
         {stages.map((stage) => (
