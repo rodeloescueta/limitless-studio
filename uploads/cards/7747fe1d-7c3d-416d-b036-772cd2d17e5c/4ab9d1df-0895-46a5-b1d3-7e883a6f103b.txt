@@ -1,0 +1,10 @@
+This is a test file for testing the file upload functionality in the Content Reach Hub attachments system.
+
+Features being tested:
+- File upload via drag and drop
+- File validation and security
+- File storage and retrieval
+- File preview and download
+- Permission-based access control
+
+Created for Phase 5 collaboration features testing.
