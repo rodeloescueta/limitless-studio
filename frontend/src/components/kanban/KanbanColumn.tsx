@@ -2,8 +2,10 @@
 
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { useSession } from 'next-auth/react'
 import { SortableContentCard } from './SortableContentCard'
 import { CreateCardButton } from './CreateCardButton'
+import { hasStageAccess, normalizeStage, type UserRole } from '@/lib/permissions'
 import type { Stage, ContentCard } from '@/lib/api-client'
 
 interface KanbanColumnProps {
@@ -13,6 +15,7 @@ interface KanbanColumnProps {
 }
 
 export function KanbanColumn({ stage, cards, teamId }: KanbanColumnProps) {
+  const { data: session } = useSession()
   const { setNodeRef, isOver } = useDroppable({
     id: stage.id,
     data: {
@@ -20,6 +23,11 @@ export function KanbanColumn({ stage, cards, teamId }: KanbanColumnProps) {
       stageId: stage.id,
     },
   })
+
+  // Check if user can create cards in this stage
+  const userRole = (session?.user?.role as UserRole) || 'member'
+  const stageName = normalizeStage(stage.name)
+  const canCreateCard = stageName && hasStageAccess(userRole, stageName, 'write')
 
   return (
     <div className="w-80 bg-card rounded-lg shadow-sm border flex flex-col">
@@ -62,7 +70,7 @@ export function KanbanColumn({ stage, cards, teamId }: KanbanColumnProps) {
           </div>
         )}
 
-        <CreateCardButton stageId={stage.id} teamId={teamId} />
+        {canCreateCard && <CreateCardButton stageId={stage.id} teamId={teamId} />}
       </div>
     </div>
   )
