@@ -15,6 +15,13 @@
       "when": 1758971013106,
       "tag": "0001_equal_random",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1759137267587,
+      "tag": "0002_solid_jackal",
+      "breakpoints": true
     }
   ]
 }

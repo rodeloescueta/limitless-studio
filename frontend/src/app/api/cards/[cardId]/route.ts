@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { getContentCard, verifyTeamAccess, updateContentCard, deleteContentCard } from '@/lib/db/utils'
+import { withAuth, withPermission } from '@/lib/auth-middleware'
 import { z } from 'zod'
 
 const updateCardSchema = z.object({
@@ -48,92 +49,54 @@ export async function GET(
   }
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ cardId: string }> }
-) {
-  try {
-    const session = await getServerSession(authOptions)
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Only admin and member can update cards
-    if (session.user.role === 'client') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
-
+export const PUT = withPermission(
+  async (request: NextRequest, { params }: { params: Promise<{ cardId: string }> }) => {
     const { cardId } = await params
-    const card = await getContentCard(cardId)
-    if (!card) {
-      return NextResponse.json({ error: 'Card not found' }, { status: 404 })
-    }
+    return cardId
+  },
+  'write',
+  async (user, permissionData, request: NextRequest) => {
+    try {
+      const body = await request.json()
+      const validatedData = updateCardSchema.parse(body)
 
-    // Verify user has access to the team
-    const hasAccess = await verifyTeamAccess(session.user.id, card.teamId)
-    if (!hasAccess) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
+      const updatedCard = await updateContentCard(permissionData.card.id, validatedData)
+      return NextResponse.json(updatedCard)
 
-    const body = await request.json()
-    const validatedData = updateCardSchema.parse(body)
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return NextResponse.json(
+          { error: 'Validation error', details: error.errors },
+          { status: 400 }
+        )
+      }
 
-    const updatedCard = await updateContentCard(cardId, validatedData)
-    return NextResponse.json(updatedCard)
-
-  } catch (error) {
-    if (error instanceof z.ZodError) {
+      console.error('Error updating card:', error)
       return NextResponse.json(
-        { error: 'Validation error', details: error.errors },
-        { status: 400 }
+        { error: 'Internal server error' },
+        { status: 500 }
       )
     }
-
-    console.error('Error updating card:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
   }
-}
+)
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ cardId: string }> }
-) {
-  try {
-    const session = await getServerSession(authOptions)
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Only admin and member can delete cards
-    if (session.user.role === 'client') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
-
+export const DELETE = withPermission(
+  async (request: NextRequest, { params }: { params: Promise<{ cardId: string }> }) => {
     const { cardId } = await params
-    const card = await getContentCard(cardId)
-    if (!card) {
-      return NextResponse.json({ error: 'Card not found' }, { status: 404 })
+    return cardId
+  },
+  'delete',
+  async (user, permissionData) => {
+    try {
+      await deleteContentCard(permissionData.card.id)
+      return NextResponse.json({ success: true })
+
+    } catch (error) {
+      console.error('Error deleting card:', error)
+      return NextResponse.json(
+        { error: 'Internal server error' },
+        { status: 500 }
+      )
     }
-
-    // Verify user has access to the team
-    const hasAccess = await verifyTeamAccess(session.user.id, card.teamId)
-    if (!hasAccess) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
-
-    await deleteContentCard(cardId)
-    return NextResponse.json({ success: true })
-
-  } catch (error) {
-    console.error('Error deleting card:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
   }
-}
+)

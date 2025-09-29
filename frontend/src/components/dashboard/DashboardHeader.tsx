@@ -20,15 +20,17 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Shield, Settings, LogOut } from 'lucide-react'
 import { ModeToggle } from '@/components/mode-toggle'
+import { NotificationDropdown } from '@/components/notifications/NotificationDropdown'
 import type { Team } from '@/lib/api-client'
 
 interface DashboardHeaderProps {
   selectedTeamId: string
   teams: Team[]
   onTeamChange: (teamId: string) => void
+  onCardClick?: (cardId: string) => void
 }
 
-export function DashboardHeader({ selectedTeamId, teams, onTeamChange }: DashboardHeaderProps) {
+export function DashboardHeader({ selectedTeamId, teams, onTeamChange, onCardClick }: DashboardHeaderProps) {
   const { data: session } = useSession()
   const selectedTeam = teams.find(t => t.id === selectedTeamId)
 
@@ -70,6 +72,8 @@ export function DashboardHeader({ selectedTeamId, teams, onTeamChange }: Dashboa
           <Button variant="outline" size="sm">
             Create Card
           </Button>
+
+          <NotificationDropdown onCardClick={onCardClick} />
 
           <ModeToggle />
 

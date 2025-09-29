@@ -78,6 +78,9 @@ class ApiClient {
         method: 'POST',
         body: JSON.stringify(data),
       }),
+
+    getMembers: (teamId: string) =>
+      this.request<TeamMember[]>(`/teams/${teamId}/members`),
   }
 
   // Cards API
@@ -111,6 +114,16 @@ class ApiClient {
         method: 'POST',
         body: JSON.stringify(data),
       }),
+
+    // Assignments
+    getAssignments: (cardId: string) =>
+      this.request<Assignment[]>(`/cards/${cardId}/assignments`),
+
+    createAssignment: (cardId: string, data: CreateAssignmentData) =>
+      this.request<Assignment>(`/cards/${cardId}/assignments`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
   }
 
   // Comments API
@@ -123,6 +136,50 @@ class ApiClient {
 
     delete: (commentId: string) =>
       this.request<void>(`/comments/${commentId}`, {
+        method: 'DELETE',
+      }),
+  }
+
+  // Assignments API
+  assignments = {
+    delete: (assignmentId: string) =>
+      this.request<void>(`/assignments/${assignmentId}`, {
+        method: 'DELETE',
+      }),
+
+    update: (assignmentId: string, data: UpdateAssignmentData) =>
+      this.request<Assignment>(`/assignments/${assignmentId}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
+  }
+
+  // Notifications API
+  notifications = {
+    getUserNotifications: (userId: string, params?: { limit?: number; offset?: number; unread?: boolean }) => {
+      const searchParams = new URLSearchParams()
+      if (params?.limit) searchParams.set('limit', params.limit.toString())
+      if (params?.offset) searchParams.set('offset', params.offset.toString())
+      if (params?.unread) searchParams.set('unread', params.unread.toString())
+
+      const queryString = searchParams.toString()
+      const endpoint = `/users/${userId}/notifications${queryString ? `?${queryString}` : ''}`
+
+      return this.request<NotificationResponse>(endpoint)
+    },
+
+    markAsRead: (notificationId: string) =>
+      this.request<Notification>(`/notifications/${notificationId}`, {
+        method: 'PUT',
+      }),
+
+    markAllAsRead: (userId: string) =>
+      this.request<{ success: boolean }>(`/users/${userId}/notifications`, {
+        method: 'PUT',
+      }),
+
+    delete: (notificationId: string) =>
+      this.request<{ success: boolean }>(`/notifications/${notificationId}`, {
         method: 'DELETE',
       }),
   }
@@ -179,7 +236,7 @@ export interface User {
   email: string
   firstName: string
   lastName: string
-  role: 'admin' | 'member' | 'client'
+  role: 'admin' | 'member' | 'client' | 'strategist' | 'scriptwriter' | 'editor' | 'coordinator'
   avatar?: string
 }
 
@@ -243,6 +300,74 @@ export interface CommentMention {
     id: string
     title: string
   }
+}
+
+export interface Assignment {
+  id: string
+  role: 'primary' | 'reviewer' | 'approver' | 'collaborator'
+  assignedAt: string
+  dueDate?: string
+  completedAt?: string
+  notes?: string
+  assignedTo: {
+    id: string
+    email: string
+    firstName: string
+    lastName: string
+    role: string
+    avatar?: string
+  }
+  assignedBy?: {
+    id: string
+    email: string
+    firstName: string
+    lastName: string
+  }
+}
+
+export interface CreateAssignmentData {
+  assignedTo: string
+  role?: 'primary' | 'reviewer' | 'approver' | 'collaborator'
+  dueDate?: string
+  notes?: string
+}
+
+export interface UpdateAssignmentData {
+  completed?: boolean
+  notes?: string
+}
+
+export interface TeamMember {
+  id: string
+  email: string
+  firstName: string
+  lastName: string
+  role: 'admin' | 'member' | 'client' | 'strategist' | 'scriptwriter' | 'editor' | 'coordinator'
+  avatar?: string
+  joinedAt: string
+}
+
+export interface Notification {
+  id: string
+  type: 'assignment' | 'mention' | 'deadline' | 'approval'
+  title: string
+  message: string
+  isRead: boolean
+  createdAt: string
+  relatedCard?: {
+    id: string
+    title: string
+  }
+  relatedComment?: {
+    id: string
+    content: string
+  }
+}
+
+export interface NotificationResponse {
+  notifications: Notification[]
+  unreadCount: number
+  hasMore: boolean
 }
 
 export { ApiError }

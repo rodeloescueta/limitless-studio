@@ -34,6 +34,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useCardDetails, useUpdateCard, useDeleteCard } from '@/lib/hooks/useCards'
 import { CommentsPanel } from '@/components/comments/CommentsPanel'
+import { AttachmentsPanel } from '@/components/attachments/AttachmentsPanel'
+import { AssignmentPanel } from '@/components/assignments/AssignmentPanel'
+import { RoleGate, EditAccess, usePermissions } from '@/components/auth/RoleGate'
 import { format } from 'date-fns'
 import { CalendarIcon, TrashIcon } from 'lucide-react'
 
@@ -57,6 +60,7 @@ export function CardDetailsModal({ cardId, isOpen, onClose }: CardDetailsModalPr
   const { data: card, isLoading } = useCardDetails(cardId || '')
   const updateCard = useUpdateCard()
   const deleteCard = useDeleteCard()
+  const permissions = usePermissions()
 
   const form = useForm<UpdateCardFormData>({
     resolver: zodResolver(updateCardSchema),
@@ -141,23 +145,27 @@ export function CardDetailsModal({ cardId, isOpen, onClose }: CardDetailsModalPr
               <Badge className={priorityColors[card.priority]}>
                 {card.priority}
               </Badge>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleDelete}
-                disabled={deleteCard.isPending}
-              >
-                <TrashIcon className="h-4 w-4" />
-              </Button>
+              <RoleGate stage={card.stage.name} action="delete">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDelete}
+                  disabled={deleteCard.isPending}
+                >
+                  <TrashIcon className="h-4 w-4" />
+                </Button>
+              </RoleGate>
             </div>
           </div>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-hidden">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="content">Content</TabsTrigger>
+            <TabsTrigger value="assignments">Assignments</TabsTrigger>
             <TabsTrigger value="comments">Comments</TabsTrigger>
+            <TabsTrigger value="attachments">Attachments</TabsTrigger>
           </TabsList>
 
           <div className="mt-4 overflow-y-auto flex-1">
@@ -223,113 +231,160 @@ export function CardDetailsModal({ cardId, isOpen, onClose }: CardDetailsModalPr
               )}
 
               {/* Edit Form */}
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="title"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Title</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Description</FormLabel>
-                        <FormControl>
-                          <Textarea rows={3} {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="priority"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Priority</FormLabel>
-                        <FormControl>
-                          <Select value={field.value} onValueChange={field.onChange}>
-                            <SelectTrigger className="w-32">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="low">Low</SelectItem>
-                              <SelectItem value="medium">Medium</SelectItem>
-                              <SelectItem value="high">High</SelectItem>
-                              <SelectItem value="urgent">Urgent</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={onClose}
-                    >
+              <EditAccess stage={card.stage.name} fallback={
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium">Title</label>
+                    <div className="mt-1 p-2 bg-gray-50 rounded border">{card.title}</div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Description</label>
+                    <div className="mt-1 p-2 bg-gray-50 rounded border">{card.description || 'No description'}</div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Priority</label>
+                    <div className="mt-1">
+                      <Badge className={priorityColors[card.priority]}>
+                        {card.priority}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="flex justify-end">
+                    <Button variant="outline" onClick={onClose}>
                       Close
                     </Button>
-                    <Button
-                      type="submit"
-                      disabled={updateCard.isPending}
-                    >
-                      {updateCard.isPending ? 'Saving...' : 'Save Changes'}
-                    </Button>
                   </div>
-                </form>
-              </Form>
+                </div>
+              }>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="title"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Title</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="description"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Description</FormLabel>
+                          <FormControl>
+                            <Textarea rows={3} {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="priority"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Priority</FormLabel>
+                          <FormControl>
+                            <Select value={field.value} onValueChange={field.onChange}>
+                              <SelectTrigger className="w-32">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="low">Low</SelectItem>
+                                <SelectItem value="medium">Medium</SelectItem>
+                                <SelectItem value="high">High</SelectItem>
+                                <SelectItem value="urgent">Urgent</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={onClose}
+                      >
+                        Close
+                      </Button>
+                      <Button
+                        type="submit"
+                        disabled={updateCard.isPending}
+                      >
+                        {updateCard.isPending ? 'Saving...' : 'Save Changes'}
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              </EditAccess>
             </TabsContent>
 
             <TabsContent value="content">
-              <Form {...form}>
-                <FormField
-                  control={form.control}
-                  name="content"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Content</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          rows={15}
-                          placeholder="Add content details, scripts, notes..."
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="flex justify-end gap-2 mt-4">
-                  <Button
-                    type="button"
-                    onClick={form.handleSubmit(onSubmit)}
-                    disabled={updateCard.isPending}
-                  >
-                    {updateCard.isPending ? 'Saving...' : 'Save Content'}
-                  </Button>
+              <EditAccess stage={card.stage.name} fallback={
+                <div>
+                  <label className="text-sm font-medium">Content</label>
+                  <div className="mt-2 p-4 bg-gray-50 rounded border min-h-[300px] whitespace-pre-wrap">
+                    {card.content || 'No content added yet'}
+                  </div>
                 </div>
-              </Form>
+              }>
+                <Form {...form}>
+                  <FormField
+                    control={form.control}
+                    name="content"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Content</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            rows={15}
+                            placeholder="Add content details, scripts, notes..."
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="flex justify-end gap-2 mt-4">
+                    <Button
+                      type="button"
+                      onClick={form.handleSubmit(onSubmit)}
+                      disabled={updateCard.isPending}
+                    >
+                      {updateCard.isPending ? 'Saving...' : 'Save Content'}
+                    </Button>
+                  </div>
+                </Form>
+              </EditAccess>
+            </TabsContent>
+
+            <TabsContent value="assignments" className="h-full">
+              <AssignmentPanel
+                cardId={cardId}
+                teamId={card.teamId}
+                readonly={!permissions.canAssign(card.stage.name)}
+              />
             </TabsContent>
 
             <TabsContent value="comments" className="h-full">
               <CommentsPanel cardId={cardId} />
+            </TabsContent>
+
+            <TabsContent value="attachments" className="h-full">
+              <AttachmentsPanel cardId={cardId} />
             </TabsContent>
           </div>
         </Tabs>

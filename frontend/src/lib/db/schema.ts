@@ -2,7 +2,7 @@ import { pgTable, uuid, varchar, text, timestamp, boolean, integer, pgEnum, inde
 import { relations } from 'drizzle-orm'
 
 // Enums
-export const userRoleEnum = pgEnum('user_role', ['admin', 'member', 'client'])
+export const userRoleEnum = pgEnum('user_role', ['admin', 'member', 'client', 'strategist', 'scriptwriter', 'editor', 'coordinator'])
 export const contentPriorityEnum = pgEnum('content_priority', ['low', 'medium', 'high', 'urgent'])
 
 // Users table
