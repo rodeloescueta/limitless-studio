@@ -18,9 +18,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Shield, Settings, LogOut } from 'lucide-react'
+import { Shield, Settings, LogOut, Building2 } from 'lucide-react'
 import { ModeToggle } from '@/components/mode-toggle'
 import { NotificationDropdown } from '@/components/notifications/NotificationDropdown'
+import { useRouter } from 'next/navigation'
 import type { Team } from '@/lib/api-client'
 
 interface DashboardHeaderProps {
@@ -32,7 +33,9 @@ interface DashboardHeaderProps {
 
 export function DashboardHeader({ selectedTeamId, teams, onTeamChange, onCardClick }: DashboardHeaderProps) {
   const { data: session } = useSession()
+  const router = useRouter()
   const selectedTeam = teams.find(t => t.id === selectedTeamId)
+  const isAdmin = session?.user?.role === 'admin'
 
   return (
     <header className="border-b bg-background px-6 py-4">
@@ -69,6 +72,17 @@ export function DashboardHeader({ selectedTeamId, teams, onTeamChange, onCardCli
         </div>
 
         <div className="flex items-center gap-3">
+          {isAdmin && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push('/dashboard/clients')}
+            >
+              <Building2 className="mr-2 h-4 w-4" />
+              Clients
+            </Button>
+          )}
+
           <Button variant="outline" size="sm">
             Create Card
           </Button>

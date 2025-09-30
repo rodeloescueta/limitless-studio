@@ -3,8 +3,10 @@
 import { useState } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { useSession } from 'next-auth/react'
 import { ContentCard } from './ContentCard'
 import { CardDetailsModal } from './CardDetailsModal'
+import { canDragCard, normalizeStage, type UserRole } from '@/lib/permissions'
 import type { ContentCard as ContentCardType } from '@/lib/api-client'
 
 interface SortableContentCardProps {
@@ -13,6 +15,13 @@ interface SortableContentCardProps {
 
 export function SortableContentCard({ card }: SortableContentCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const { data: session } = useSession()
+
+  // Check if user can drag this card based on stage permissions
+  const userRole = (session?.user?.role as UserRole) || 'member'
+  const stageName = normalizeStage(card.stage.name)
+  const isDraggable = stageName ? canDragCard(userRole, stageName) : false
+
   const {
     attributes,
     listeners,
@@ -26,6 +35,7 @@ export function SortableContentCard({ card }: SortableContentCardProps) {
       type: 'card',
       card,
     },
+    disabled: !isDraggable,  // Disable drag if user doesn't have permission
   })
 
   const style = {
@@ -38,7 +48,7 @@ export function SortableContentCard({ card }: SortableContentCardProps) {
       <div ref={setNodeRef} style={style} {...attributes}>
         <ContentCard
           card={card}
-          dragHandleProps={listeners}
+          dragHandleProps={isDraggable ? listeners : undefined}  // Only allow dragging if permitted
           isDragging={isDragging}
           onClick={() => setIsModalOpen(true)}
         />

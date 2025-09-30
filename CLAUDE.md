@@ -26,11 +26,22 @@ Content OS (Operating System) - A specialized project management system for cont
 - Each stage is a column in a Kanban board
 - Content Cards move through stages with rich collaboration features
 
-### User Roles
+### User Roles & Permissions
 
-- **Admin**: Manage team, all content access
-- **Member**: Create/edit cards, tasks, comments
-- **Client/Approver**: View, comment, approve in Connect stage
+The system implements **5 specialized business roles** with stage-specific permissions:
+
+- **Admin**: Full access to all stages and team management
+- **Strategist**: Comment/approve access across all stages (no editing)
+- **Scriptwriter**: Full access to Research & Envision, read-only on other stages
+- **Editor**: Full access to Assemble & Connect, read-only on other stages
+- **Coordinator**: Full access to Connect & Hone, read-only on Research/Envision/Assemble
+
+**Key Permission Features**:
+- All users see all 5 workflow stages (full pipeline visibility)
+- Read-only stages display "View Only" badge with reduced opacity
+- Drag-and-drop restricted to stages with full access
+- Cards remain visible when moved between stages (no disappearing cards)
+- Permission logic centralized in `/lib/permissions.ts`
 
 ## Technology Stack
 
@@ -80,7 +91,7 @@ docker-compose logs web   # View app logs
 
 ### Database Schema (Core Tables)
 
-- `users`: Authentication + role-based access (`admin`|`member`|`client`)
+- `users`: Authentication + role-based access (`admin`|`strategist`|`scriptwriter`|`editor`|`coordinator`|`member`|`client`)
 - `teams`: Team organization
 - `team_members`: Team membership with roles
 - `stages`: REACH workflow columns per team

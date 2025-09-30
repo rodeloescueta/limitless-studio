@@ -26,16 +26,16 @@ const PERMISSION_MATRIX: Record<UserRole, Record<StageName, PermissionLevel>> = 
   scriptwriter: {
     research: 'full',
     envision: 'full',
-    assemble: 'none',
-    connect: 'none',
-    hone: 'none',
+    assemble: 'read_only',
+    connect: 'read_only',
+    hone: 'read_only',
   },
   editor: {
-    research: 'none',
-    envision: 'none',
+    research: 'read_only',
+    envision: 'read_only',
     assemble: 'full',
     connect: 'full',
-    hone: 'none',
+    hone: 'read_only',
   },
   coordinator: {
     research: 'read_only',
@@ -230,4 +230,21 @@ export function getPermissionDescription(userRole: UserRole, stageName: StageNam
     default:
       return 'Access level unknown'
   }
+}
+
+/**
+ * Check if user can drag and drop cards in a stage
+ */
+export function canDragCard(userRole: UserRole, stageName: StageName): boolean {
+  const level = getStagePermissionLevel(userRole, stageName)
+  // Only allow drag-drop for full access
+  return level === 'full'
+}
+
+/**
+ * Check if stage should show as read-only (visible but restricted)
+ */
+export function isStageReadOnly(userRole: UserRole, stageName: StageName): boolean {
+  const level = getStagePermissionLevel(userRole, stageName)
+  return level === 'read_only' || level === 'comment_approve'
 }

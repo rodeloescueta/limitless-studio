@@ -1,9 +1,12 @@
-import { pgTable, uuid, varchar, text, timestamp, boolean, integer, pgEnum, index, unique } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, varchar, text, timestamp, boolean, integer, pgEnum, index, unique, jsonb } from 'drizzle-orm/pg-core'
 import { relations } from 'drizzle-orm'
 
 // Enums
 export const userRoleEnum = pgEnum('user_role', ['admin', 'member', 'client', 'strategist', 'scriptwriter', 'editor', 'coordinator'])
 export const contentPriorityEnum = pgEnum('content_priority', ['low', 'medium', 'high', 'urgent'])
+export const alertTypeEnum = pgEnum('alert_type', ['stage_overdue', 'deadline_missed', 'no_response', 'manual'])
+export const alertSeverityEnum = pgEnum('alert_severity', ['low', 'medium', 'high', 'critical'])
+export const alertStatusEnum = pgEnum('alert_status', ['open', 'acknowledged', 'resolved', 'escalated', 'dismissed'])
 
 // Users table
 export const users = pgTable('users', {
@@ -28,9 +31,16 @@ export const teams = pgTable('teams', {
   name: varchar('name', { length: 200 }).notNull(),
   description: text('description'),
   createdBy: uuid('created_by').references(() => users.id),
+  // Client-specific fields
+  clientCompanyName: varchar('client_company_name', { length: 200 }),
+  industry: varchar('industry', { length: 100 }),
+  contactEmail: varchar('contact_email', { length: 255 }),
+  isClient: boolean('is_client').default(false),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-})
+}, (table) => ({
+  clientIdx: index('teams_client_idx').on(table.isClient),
+}))
 
 // Team members junction table
 export const teamMembers = pgTable('team_members', {
@@ -190,6 +200,111 @@ export const activityFeed = pgTable('activity_feed', {
   actionIdx: index('activity_feed_action_idx').on(table.actionType),
 }))
 
+// Client profiles table
+export const clientProfiles = pgTable('client_profiles', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  teamId: uuid('team_id').references(() => teams.id, { onDelete: 'cascade' }).notNull().unique(),
+
+  // Brand Information
+  brandBio: text('brand_bio'),
+  brandVoice: text('brand_voice'),
+  targetAudience: text('target_audience'),
+  contentPillars: jsonb('content_pillars').$type<string[]>(),
+
+  // Style Guidelines
+  styleGuidelines: jsonb('style_guidelines').$type<{
+    colors?: string[]
+    fonts?: string[]
+    tone?: string
+    dosDonts?: { dos: string[]; donts: string[] }
+  }>(),
+
+  // Asset Links
+  assetLinks: jsonb('asset_links').$type<{
+    dropbox?: string
+    googleDrive?: string
+    notion?: string
+    other?: { name: string; url: string }[]
+  }>(),
+
+  // Competitive Analysis
+  competitiveChannels: jsonb('competitive_channels').$type<{
+    platform: string
+    channelUrl: string
+    notes: string
+  }[]>(),
+
+  // Performance Goals
+  performanceGoals: jsonb('performance_goals').$type<{
+    views?: number
+    engagement?: number
+    followers?: number
+    timeframe?: string
+  }>(),
+
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  teamIdx: index('client_profiles_team_idx').on(table.teamId),
+}))
+
+// Alerts table for monitoring and escalation
+export const alerts = pgTable('alerts', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  contentCardId: uuid('content_card_id').references(() => contentCards.id, { onDelete: 'cascade' }).notNull(),
+  teamId: uuid('team_id').references(() => teams.id, { onDelete: 'cascade' }).notNull(),
+
+  type: alertTypeEnum('type').notNull(),
+  severity: alertSeverityEnum('severity').notNull().default('medium'),
+  status: alertStatusEnum('status').notNull().default('open'),
+
+  title: varchar('title', { length: 255 }).notNull(),
+  message: text('message').notNull(),
+
+  // Assigned to whom
+  assignedTo: uuid('assigned_to').references(() => users.id, { onDelete: 'set null' }),
+
+  // Time tracking
+  detectedAt: timestamp('detected_at').defaultNow().notNull(),
+  acknowledgedAt: timestamp('acknowledged_at'),
+  resolvedAt: timestamp('resolved_at'),
+
+  // Escalation tracking
+  escalatedAt: timestamp('escalated_at'),
+  escalatedTo: uuid('escalated_to').references(() => users.id, { onDelete: 'set null' }),
+  escalationReason: text('escalation_reason'),
+
+  // Metadata
+  metadata: jsonb('metadata').$type<{
+    stageName?: string
+    daysOverdue?: number
+    timeLimit?: number
+    previousAssignee?: string
+  }>(),
+
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  cardIdx: index('alerts_card_idx').on(table.contentCardId),
+  teamIdx: index('alerts_team_idx').on(table.teamId),
+  statusIdx: index('alerts_status_idx').on(table.status),
+  severityIdx: index('alerts_severity_idx').on(table.severity),
+  assignedToIdx: index('alerts_assigned_to_idx').on(table.assignedTo),
+}))
+
+// Stage time configurations
+export const stageTimeConfigs = pgTable('stage_time_configs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  teamId: uuid('team_id').references(() => teams.id, { onDelete: 'cascade' }),
+  stageName: varchar('stage_name', { length: 100 }).notNull(),
+  maxDays: integer('max_days').notNull(),
+  isGlobal: boolean('is_global').default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  teamStageIdx: index('stage_time_configs_team_stage_idx').on(table.teamId, table.stageName),
+}))
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   teamMemberships: many(teamMembers),
@@ -214,6 +329,7 @@ export const teamsRelations = relations(teams, ({ one, many }) => ({
   members: many(teamMembers),
   stages: many(stages),
   contentCards: many(contentCards),
+  clientProfile: one(clientProfiles),
 }))
 
 export const teamMembersRelations = relations(teamMembers, ({ one }) => ({
@@ -358,6 +474,41 @@ export const activityFeedRelations = relations(activityFeed, ({ one }) => ({
   }),
 }))
 
+export const clientProfilesRelations = relations(clientProfiles, ({ one }) => ({
+  team: one(teams, {
+    fields: [clientProfiles.teamId],
+    references: [teams.id],
+  }),
+}))
+
+export const alertsRelations = relations(alerts, ({ one }) => ({
+  contentCard: one(contentCards, {
+    fields: [alerts.contentCardId],
+    references: [contentCards.id],
+  }),
+  team: one(teams, {
+    fields: [alerts.teamId],
+    references: [teams.id],
+  }),
+  assignedUser: one(users, {
+    fields: [alerts.assignedTo],
+    references: [users.id],
+    relationName: 'assignedAlerts',
+  }),
+  escalatedUser: one(users, {
+    fields: [alerts.escalatedTo],
+    references: [users.id],
+    relationName: 'escalatedAlerts',
+  }),
+}))
+
+export const stageTimeConfigsRelations = relations(stageTimeConfigs, ({ one }) => ({
+  team: one(teams, {
+    fields: [stageTimeConfigs.teamId],
+    references: [teams.id],
+  }),
+}))
+
 // Type exports
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
@@ -383,3 +534,9 @@ export type CardTeamShare = typeof cardTeamShares.$inferSelect
 export type NewCardTeamShare = typeof cardTeamShares.$inferInsert
 export type ActivityFeedItem = typeof activityFeed.$inferSelect
 export type NewActivityFeedItem = typeof activityFeed.$inferInsert
+export type ClientProfile = typeof clientProfiles.$inferSelect
+export type NewClientProfile = typeof clientProfiles.$inferInsert
+export type Alert = typeof alerts.$inferSelect
+export type NewAlert = typeof alerts.$inferInsert
+export type StageTimeConfig = typeof stageTimeConfigs.$inferSelect
+export type NewStageTimeConfig = typeof stageTimeConfigs.$inferInsert

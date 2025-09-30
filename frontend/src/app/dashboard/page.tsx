@@ -2,17 +2,25 @@
 
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useUserTeams } from '@/lib/hooks/useTeams'
 import { KanbanBoard } from '@/components/kanban/KanbanBoard'
-import { DashboardHeader } from '@/components/dashboard/DashboardHeader'
 import { TeamSelectionScreen } from '@/components/dashboard/TeamSelectionScreen'
 import { Skeleton } from '@/components/ui/skeleton'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 export default function DashboardPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null)
+  const searchParams = useSearchParams()
+  const teamFromUrl = searchParams.get('team')
+  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(teamFromUrl)
 
   const { data: userTeams, isLoading: teamsLoading } = useUserTeams()
 
@@ -29,6 +37,11 @@ export default function DashboardPage() {
       setSelectedTeamId(userTeams[0].id)
     }
   }, [userTeams, selectedTeamId])
+
+  const handleTeamChange = (teamId: string) => {
+    setSelectedTeamId(teamId)
+    router.push(`/dashboard?team=${teamId}`)
+  }
 
   // Show loading while checking authentication
   if (status === 'loading') {
@@ -69,17 +82,43 @@ export default function DashboardPage() {
     )
   }
 
-  return (
-    <div className="flex flex-col h-screen">
-      <DashboardHeader
-        selectedTeamId={selectedTeamId}
-        teams={userTeams}
-        onTeamChange={setSelectedTeamId}
-      />
+  const selectedTeam = userTeams.find(t => t.id === selectedTeamId)
 
-      <main className="flex-1 overflow-hidden">
+  return (
+    <div className="space-y-4">
+      {/* Team Selector */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Content Board</h1>
+          <p className="text-muted-foreground">Manage your content through the REACH workflow</p>
+        </div>
+        <Select value={selectedTeamId} onValueChange={handleTeamChange}>
+          <SelectTrigger className="w-[280px]">
+            <SelectValue>
+              {selectedTeam ? selectedTeam.name : 'Select Team'}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {userTeams.map((team) => (
+              <SelectItem key={team.id} value={team.id}>
+                <div>
+                  <div className="font-medium">{team.name}</div>
+                  {team.description && (
+                    <div className="text-xs text-muted-foreground line-clamp-1">
+                      {team.description}
+                    </div>
+                  )}
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Kanban Board */}
+      <div className="-mx-4">
         <KanbanBoard teamId={selectedTeamId} />
-      </main>
+      </div>
     </div>
   )
 }

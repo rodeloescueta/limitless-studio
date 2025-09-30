@@ -28,14 +28,13 @@ export function KanbanBoard({ teamId }: KanbanBoardProps) {
   // Get user role for permission checking
   const userRole = (session?.user?.role as UserRole) || 'member'
 
-  // Filter stages based on user permissions
-  const accessibleStages = stages.filter(stage => {
-    const stageName = normalizeStage(stage.name)
-    return stageName && hasStageAccess(userRole, stageName, 'read')
-  })
+  // Show ALL stages - don't filter them
+  // Users should see all stages but with read-only restrictions where appropriate
+  const accessibleStages = stages
 
-  // Filter cards based on user permissions
-  const accessibleCards = filterCardsByPermissions(cards, userRole)
+  // Show ALL cards - don't filter them
+  // Users can see cards in all stages (read-only where they don't have edit access)
+  const accessibleCards = cards
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
