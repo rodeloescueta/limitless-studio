@@ -135,12 +135,23 @@ export function CardDetailsModal({ cardId, isOpen, onClose }: CardDetailsModalPr
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl h-[80vh] overflow-hidden">
+      <DialogContent className="max-w-5xl h-[85vh] overflow-hidden">
         <DialogHeader>
-          <div className="flex items-start justify-between">
-            <DialogTitle className="text-lg font-semibold flex-1">
-              {card.title}
-            </DialogTitle>
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 flex-1">
+              <Badge variant="outline" className="text-xs font-normal">
+                {card.contentType || 'Blog'}
+              </Badge>
+              <Badge
+                className="text-xs font-normal"
+                style={{
+                  backgroundColor: card.stage.color || '#6b7280',
+                  color: 'white'
+                }}
+              >
+                {card.stage.name}
+              </Badge>
+            </div>
             <div className="flex items-center gap-2">
               <Badge className={priorityColors[card.priority]}>
                 {card.priority}
@@ -157,6 +168,9 @@ export function CardDetailsModal({ cardId, isOpen, onClose }: CardDetailsModalPr
               </RoleGate>
             </div>
           </div>
+          <DialogTitle className="text-2xl font-semibold mt-2">
+            {card.title}
+          </DialogTitle>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-hidden">
@@ -169,165 +183,162 @@ export function CardDetailsModal({ cardId, isOpen, onClose }: CardDetailsModalPr
           </TabsList>
 
           <div className="mt-4 overflow-y-auto flex-1">
-            <TabsContent value="overview" className="space-y-6">
-              {/* Card Info */}
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-gray-600">Created by</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Avatar className="h-6 w-6">
-                      <AvatarImage src={card.createdBy.avatar} />
-                      <AvatarFallback className="text-xs">
-                        {card.createdBy.firstName[0]}{card.createdBy.lastName[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span>{card.createdBy.firstName} {card.createdBy.lastName}</span>
-                  </div>
-                </div>
-
-                <div>
-                  <p className="text-gray-600">Stage</p>
-                  <p className="font-medium mt-1">{card.stage.name}</p>
-                </div>
-
-                {card.assignedTo && (
+            <TabsContent value="overview" className="m-0 p-0">
+              <div className="grid grid-cols-3 gap-6">
+                {/* Main Content Area - 2 columns */}
+                <div className="col-span-2 space-y-6">
+                  {/* Description Section */}
                   <div>
-                    <p className="text-gray-600">Assigned to</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Avatar className="h-6 w-6">
-                        <AvatarImage src={card.assignedTo.avatar} />
-                        <AvatarFallback className="text-xs">
-                          {card.assignedTo.firstName[0]}{card.assignedTo.lastName[0]}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span>{card.assignedTo.firstName} {card.assignedTo.lastName}</span>
-                    </div>
+                    <h3 className="text-sm font-semibold text-foreground mb-3">Description</h3>
+                    {card.description ? (
+                      <p className="text-sm text-muted-foreground leading-relaxed">{card.description}</p>
+                    ) : (
+                      <p className="text-sm text-muted-foreground italic">No description provided</p>
+                    )}
                   </div>
-                )}
 
-                {card.dueDate && (
-                  <div>
-                    <p className="text-gray-600">Due date</p>
-                    <div className="flex items-center gap-1 mt-1">
-                      <CalendarIcon className="h-4 w-4" />
-                      <span>{format(new Date(card.dueDate), 'MMM d, yyyy')}</span>
+                  {/* Notes Section */}
+                  {card.content && (
+                    <div className="bg-accent/50 rounded-lg p-4 border">
+                      <h3 className="text-sm font-semibold text-foreground mb-2">Notes</h3>
+                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">{card.content}</p>
                     </div>
-                  </div>
-                )}
-              </div>
+                  )}
 
-              {/* Tags */}
-              {tags && tags.length > 0 && (
-                <div>
-                  <p className="text-gray-600 text-sm mb-2">Tags</p>
-                  <div className="flex flex-wrap gap-1">
-                    {tags.map((tag: string, index: number) => (
-                      <Badge key={index} variant="outline">
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
+                  {/* Edit Form - Only visible with edit access */}
+                  <EditAccess stage={card.stage.name} fallback={null}>
+                    <Form {...form}>
+                      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                        <FormField
+                          control={form.control}
+                          name="title"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Title</FormLabel>
+                              <FormControl>
+                                <Input {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="description"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Description</FormLabel>
+                              <FormControl>
+                                <Textarea rows={3} {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="priority"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Priority</FormLabel>
+                              <FormControl>
+                                <Select value={field.value} onValueChange={field.onChange}>
+                                  <SelectTrigger className="w-32">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="low">Low</SelectItem>
+                                    <SelectItem value="medium">Medium</SelectItem>
+                                    <SelectItem value="high">High</SelectItem>
+                                    <SelectItem value="urgent">Urgent</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={onClose}
+                          >
+                            Close
+                          </Button>
+                          <Button
+                            type="submit"
+                            disabled={updateCard.isPending}
+                          >
+                            {updateCard.isPending ? 'Saving...' : 'Save Changes'}
+                          </Button>
+                        </div>
+                      </form>
+                    </Form>
+                  </EditAccess>
                 </div>
-              )}
 
-              {/* Edit Form */}
-              <EditAccess stage={card.stage.name} fallback={
+                {/* Sidebar - 1 column */}
                 <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium">Title</label>
-                    <div className="mt-1 p-2 bg-gray-50 rounded border">{card.title}</div>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Description</label>
-                    <div className="mt-1 p-2 bg-gray-50 rounded border">{card.description || 'No description'}</div>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Priority</label>
-                    <div className="mt-1">
-                      <Badge className={priorityColors[card.priority]}>
-                        {card.priority}
-                      </Badge>
+                  {/* Metadata */}
+                  <div className="bg-muted/50 rounded-lg p-4 space-y-3 text-sm">
+                    <div>
+                      <p className="text-muted-foreground text-xs mb-1">Created by</p>
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-6 w-6">
+                          <AvatarImage src={card.createdBy.avatar} />
+                          <AvatarFallback className="text-xs">
+                            {card.createdBy.firstName[0]}{card.createdBy.lastName[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-foreground">{card.createdBy.firstName} {card.createdBy.lastName}</span>
+                      </div>
                     </div>
+
+                    {card.assignedTo && (
+                      <div>
+                        <p className="text-muted-foreground text-xs mb-1">Assigned to</p>
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-6 w-6">
+                            <AvatarImage src={card.assignedTo.avatar} />
+                            <AvatarFallback className="text-xs">
+                              {card.assignedTo.firstName[0]}{card.assignedTo.lastName[0]}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-foreground">{card.assignedTo.firstName} {card.assignedTo.lastName}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {card.dueDate && (
+                      <div>
+                        <p className="text-muted-foreground text-xs mb-1">Due date</p>
+                        <div className="flex items-center gap-2">
+                          <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-foreground">{format(new Date(card.dueDate), 'MMM d, yyyy')}</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex justify-end">
-                    <Button variant="outline" onClick={onClose}>
-                      Close
-                    </Button>
-                  </div>
+
+                  {/* Tags */}
+                  {tags && tags.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-semibold text-foreground mb-2">Tags</h3>
+                      <div className="flex flex-wrap gap-1">
+                        {tags.map((tag: string, index: number) => (
+                          <Badge key={index} variant="outline" className="text-xs">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              }>
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="title"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Title</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="description"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Description</FormLabel>
-                          <FormControl>
-                            <Textarea rows={3} {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="priority"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Priority</FormLabel>
-                          <FormControl>
-                            <Select value={field.value} onValueChange={field.onChange}>
-                              <SelectTrigger className="w-32">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="low">Low</SelectItem>
-                                <SelectItem value="medium">Medium</SelectItem>
-                                <SelectItem value="high">High</SelectItem>
-                                <SelectItem value="urgent">Urgent</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={onClose}
-                      >
-                        Close
-                      </Button>
-                      <Button
-                        type="submit"
-                        disabled={updateCard.isPending}
-                      >
-                        {updateCard.isPending ? 'Saving...' : 'Save Changes'}
-                      </Button>
-                    </div>
-                  </form>
-                </Form>
-              </EditAccess>
+              </div>
             </TabsContent>
 
             <TabsContent value="content">

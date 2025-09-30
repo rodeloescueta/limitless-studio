@@ -11,9 +11,10 @@ import type { ContentCard as ContentCardType } from '@/lib/api-client'
 
 interface SortableContentCardProps {
   card: ContentCardType
+  stageColor?: string
 }
 
-export function SortableContentCard({ card }: SortableContentCardProps) {
+export function SortableContentCard({ card, stageColor }: SortableContentCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const { data: session } = useSession()
 
@@ -51,6 +52,7 @@ export function SortableContentCard({ card }: SortableContentCardProps) {
           dragHandleProps={isDraggable ? listeners : undefined}  // Only allow dragging if permitted
           isDragging={isDragging}
           onClick={() => setIsModalOpen(true)}
+          stageColor={stageColor}
         />
       </div>
 

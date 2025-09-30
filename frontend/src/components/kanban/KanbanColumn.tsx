@@ -15,6 +15,15 @@ interface KanbanColumnProps {
   teamId: string
 }
 
+// Stage color mapping for REACH workflow
+const stageColorMap: Record<string, string> = {
+  'Research': 'rgb(59 130 246)',
+  'Envision': 'rgb(234 179 8)',
+  'Assemble': 'rgb(249 115 22)',
+  'Connect': 'rgb(168 85 247)',
+  'Hone': 'rgb(34 197 94)',
+}
+
 export function KanbanColumn({ stage, cards, teamId }: KanbanColumnProps) {
   const { data: session } = useSession()
   const { setNodeRef, isOver } = useDroppable({
@@ -32,13 +41,19 @@ export function KanbanColumn({ stage, cards, teamId }: KanbanColumnProps) {
   const isReadOnly = stageName && isStageReadOnly(userRole, stageName)
   const permissionDesc = stageName ? getPermissionDescription(userRole, stageName) : ''
 
+  // Get stage color
+  const stageColor = stageColorMap[stage.name] || stage.color || 'rgb(107 114 128)'
+
   return (
-    <div className="w-80 bg-card rounded-lg shadow-sm border flex flex-col">
+    <div
+      className="w-80 bg-card rounded-lg border flex flex-col"
+      style={{
+        borderTop: `4px solid ${stageColor}`,
+        boxShadow: `0 -2px 12px -4px ${stageColor}, 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)`
+      }}
+    >
       {/* Column Header */}
-      <div
-        className="p-4 border-b border-l-4 rounded-t-lg"
-        style={{ borderLeftColor: stage.color || '#6b7280' }}
-      >
+      <div className="p-4 border-b rounded-t-lg">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <h3 className="font-semibold text-card-foreground">{stage.name}</h3>
@@ -71,7 +86,7 @@ export function KanbanColumn({ stage, cards, teamId }: KanbanColumnProps) {
           strategy={verticalListSortingStrategy}
         >
           {cards.map((card) => (
-            <SortableContentCard key={card.id} card={card} />
+            <SortableContentCard key={card.id} card={card} stageColor={stageColor} />
           ))}
         </SortableContext>
 
