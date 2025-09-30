@@ -3,9 +3,10 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { withAuth, withPermission } from '@/lib/auth-middleware'
 import { db } from '@/lib/db'
-import { cardAssignments, contentCards, users, notifications } from '@/lib/db/schema'
+import { cardAssignments, contentCards, users } from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
+import { enqueueNotification } from '@/lib/queue'
 
 const createAssignmentSchema = z.object({
   assignedTo: z.string().uuid(),
@@ -130,13 +131,14 @@ export const POST = withPermission(
         })
         .returning()
 
-      // Create notification for assigned user
-      await db.insert(notifications).values({
-        userId: validatedData.assignedTo,
+      // Queue notification for assigned user (non-blocking)
+      await enqueueNotification({
         type: 'assignment',
+        userId: validatedData.assignedTo,
+        cardId: permissionData.card.id,
         title: 'New Assignment',
-        message: `You have been assigned to "${permissionData.card.title}"`,
-        relatedCardId: permissionData.card.id,
+        message: `You have been assigned to "${permissionData.card.title}" by ${user.name}`,
+        slackEnabled: true,
       })
 
       // Return assignment with user details
