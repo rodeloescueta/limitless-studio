@@ -105,7 +105,7 @@
         "@tailwindcss/postcss": "^4.1.12",
         "@trivago/prettier-plugin-sort-imports": "^5.2.2",
         "@types/node": "^24.3.0",
-        "@types/react": "^19.1.10",
+        "@types/react": "^19.1.16",
         "@types/react-dom": "^19.1.7",
         "drizzle-kit": "^0.31.5",
         "eslint": "^9.33.0",
