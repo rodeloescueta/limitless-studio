@@ -1,0 +1,5 @@
+# SSL certificates will be stored here when using domain with HTTPS
+# DO NOT commit actual certificate files to git
+
+# Note: For IP-based deployment (current setup), SSL/Nginx is not required
+# The nginx directory is reserved for future domain-based deployment
