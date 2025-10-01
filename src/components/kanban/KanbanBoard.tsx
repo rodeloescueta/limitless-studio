@@ -3,12 +3,14 @@
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors, pointerWithin, rectIntersection, closestCenter } from '@dnd-kit/core'
 import { SortableContext, arrayMove } from '@dnd-kit/sortable'
 import { useState } from 'react'
+import { useSession } from 'next-auth/react'
 import { useTeamCards } from '@/lib/hooks/useCards'
 import { useTeamStages } from '@/lib/hooks/useTeams'
 import { useCardMovement } from '@/lib/hooks/useCards'
 import { KanbanColumn } from './KanbanColumn'
 import { ContentCard } from './ContentCard'
 import { Skeleton } from '@/components/ui/skeleton'
+import { hasStageAccess, normalizeStage, filterCardsByPermissions, type UserRole, type StageName } from '@/lib/permissions'
 import type { ContentCard as ContentCardType } from '@/lib/api-client'
 
 interface KanbanBoardProps {
@@ -17,10 +19,22 @@ interface KanbanBoardProps {
 
 export function KanbanBoard({ teamId }: KanbanBoardProps) {
   const [activeCard, setActiveCard] = useState<ContentCardType | null>(null)
+  const { data: session } = useSession()
 
   const { data: cards = [], isLoading: cardsLoading } = useTeamCards(teamId)
   const { data: stages = [], isLoading: stagesLoading } = useTeamStages(teamId)
   const moveCard = useCardMovement()
+
+  // Get user role for permission checking
+  const userRole = (session?.user?.role as UserRole) || 'member'
+
+  // Show ALL stages - don't filter them
+  // Users should see all stages but with read-only restrictions where appropriate
+  const accessibleStages = stages
+
+  // Show ALL cards - don't filter them
+  // Users can see cards in all stages (read-only where they don't have edit access)
+  const accessibleCards = cards
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -61,7 +75,7 @@ export function KanbanBoard({ teamId }: KanbanBoardProps) {
   }
 
   const handleDragStart = (event: DragStartEvent) => {
-    const card = cards.find(c => c.id === event.active.id)
+    const card = accessibleCards.find(c => c.id === event.active.id)
     setActiveCard(card || null)
   }
 
@@ -80,7 +94,7 @@ export function KanbanBoard({ teamId }: KanbanBoardProps) {
       return
     }
 
-    const sourceCard = cards.find(c => c.id === active.id)
+    const sourceCard = accessibleCards.find(c => c.id === active.id)
     if (!sourceCard) {
       console.log('Source card not found')
       return
@@ -97,7 +111,7 @@ export function KanbanBoard({ teamId }: KanbanBoardProps) {
       console.log('Dropped on stage:', targetStageId)
     } else if (over.data.current?.type === 'card') {
       // Dropped on another card
-      const targetCard = cards.find(c => c.id === over.id)
+      const targetCard = accessibleCards.find(c => c.id === over.id)
       if (targetCard) {
         targetStageId = targetCard.stageId
         targetPosition = targetCard.position
@@ -110,10 +124,10 @@ export function KanbanBoard({ teamId }: KanbanBoardProps) {
       // Try to find stage from DOM hierarchy
       console.log('Fallback: trying to detect stage from over element')
       const stageId = over.id as string
-      const stage = stages.find(s => s.id === stageId)
+      const stage = accessibleStages.find(s => s.id === stageId)
       if (stage) {
         targetStageId = stageId
-        targetPosition = cards.filter(c => c.stageId === stageId).length + 1
+        targetPosition = accessibleCards.filter(c => c.stageId === stageId).length + 1
       } else {
         console.log('Could not determine target stage')
         return
@@ -148,12 +162,12 @@ export function KanbanBoard({ teamId }: KanbanBoardProps) {
     return <KanbanBoardSkeleton />
   }
 
-  if (stages.length === 0) {
+  if (accessibleStages.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <h3 className="text-lg font-medium text-gray-900">No stages found</h3>
-          <p className="text-gray-600">This team doesn't have any workflow stages yet.</p>
+          <h3 className="text-lg font-medium text-gray-900">No accessible stages</h3>
+          <p className="text-gray-600">You don't have permission to view any workflow stages yet.</p>
         </div>
       </div>
     )
@@ -167,11 +181,11 @@ export function KanbanBoard({ teamId }: KanbanBoardProps) {
       collisionDetection={customCollisionDetection}
     >
       <div className="flex gap-6 p-6 overflow-x-auto min-h-screen bg-background">
-        {stages.map((stage) => (
+        {accessibleStages.map((stage) => (
           <KanbanColumn
             key={stage.id}
             stage={stage}
-            cards={cards.filter(card => card.stageId === stage.id)}
+            cards={accessibleCards.filter(card => card.stageId === stage.id)}
             teamId={teamId}
           />
         ))}

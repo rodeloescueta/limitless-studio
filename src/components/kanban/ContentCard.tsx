@@ -18,9 +18,10 @@ interface ContentCardProps {
   dragHandleProps?: any
   isDragging?: boolean
   onClick?: () => void
+  stageColor?: string
 }
 
-export function ContentCard({ card, dragHandleProps, isDragging, onClick }: ContentCardProps) {
+export function ContentCard({ card, dragHandleProps, isDragging, onClick, stageColor }: ContentCardProps) {
   const handleClick = (e: React.MouseEvent) => {
     // Don't trigger if clicking the drag handle
     if (dragHandleProps && e.target === e.currentTarget) {
@@ -39,14 +40,22 @@ export function ContentCard({ card, dragHandleProps, isDragging, onClick }: Cont
 
   return (
     <Card
-      className={`cursor-pointer hover:shadow-md transition-shadow ${
+      className={`cursor-pointer hover:shadow-md transition-all ${
         isDragging ? 'opacity-50 rotate-2 shadow-lg' : ''
       }`}
       onClick={handleClick}
+      style={stageColor ? {
+        borderLeft: `4px solid ${stageColor}`,
+        boxShadow: `
+          -2px 0 8px -2px ${stageColor},
+          0 1px 3px 0 rgb(0 0 0 / 0.1),
+          0 1px 2px -1px rgb(0 0 0 / 0.1)
+        `
+      } : undefined}
     >
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
-          <h4 className="font-medium text-sm text-gray-900 line-clamp-2 flex-1 mr-2">
+          <h4 className="font-medium text-sm text-card-foreground line-clamp-2 flex-1 mr-2">
             {card.title}
           </h4>
           <div className="flex items-center gap-1">
@@ -68,7 +77,7 @@ export function ContentCard({ card, dragHandleProps, isDragging, onClick }: Cont
         </div>
 
         {card.description && (
-          <p className="text-xs text-gray-600 line-clamp-2 mt-1">
+          <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
             {card.description}
           </p>
         )}
@@ -92,7 +101,7 @@ export function ContentCard({ card, dragHandleProps, isDragging, onClick }: Cont
         )}
 
         {/* Card Footer */}
-        <div className="flex items-center justify-between text-xs text-gray-500">
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
           <div className="flex items-center gap-2">
             {card.assignedTo && (
               <div className="flex items-center gap-1">

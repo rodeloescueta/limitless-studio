@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { comments, commentMentions, notifications, users } from '@/lib/db/schema'
+import { comments, commentMentions, users } from '@/lib/db/schema'
 import { eq, desc } from 'drizzle-orm'
 import { z } from 'zod'
+import { enqueueNotification } from '@/lib/queue'
 
 const createCommentSchema = z.object({
   content: z.string().min(1, 'Comment content is required'),
@@ -102,15 +103,15 @@ export async function POST(
           isRead: false,
         })
 
-        // Create notification
-        await db.insert(notifications).values({
-          userId: mentionedUserId,
+        // Queue notification (non-blocking)
+        await enqueueNotification({
           type: 'mention',
+          userId: mentionedUserId,
+          cardId: cardId,
+          commentId: newComment.id,
           title: 'You were mentioned in a comment',
           message: `${userName} mentioned you in a comment`,
-          relatedCardId: cardId,
-          relatedCommentId: newComment.id,
-          isRead: false,
+          slackEnabled: true,
         })
       }
     }
