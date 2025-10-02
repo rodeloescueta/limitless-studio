@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { getContentCard, verifyTeamAccess, updateContentCard, deleteContentCard } from '@/lib/db/utils'
 import { withAuth, withPermission } from '@/lib/auth-middleware'
+import { AuditLogService } from '@/lib/services/audit-log.service'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 import { stages } from '@/lib/db/schema'
@@ -109,7 +110,27 @@ export const PUT = withPermission(
         }
       }
 
+      // Detect changed fields for audit log
+      const changedFields = AuditLogService.detectChangedFields(
+        permissionData.card,
+        { ...permissionData.card, ...validatedData },
+        ['title', 'description', 'content', 'priority', 'assignedTo', 'dueDate', 'tags']
+      )
+
       const updatedCard = await updateContentCard(permissionData.card.id, validatedData)
+
+      // Log card update
+      if (changedFields) {
+        await AuditLogService.createLog({
+          entityType: 'content_card',
+          entityId: permissionData.card.id,
+          action: 'updated',
+          userId: user.id,
+          teamId: permissionData.card.teamId,
+          changedFields,
+        })
+      }
+
       return NextResponse.json(updatedCard)
 
     } catch (error) {
@@ -137,6 +158,19 @@ export const DELETE = withPermission(
   'delete',
   async (user, permissionData) => {
     try {
+      // Log card deletion (before deleting)
+      await AuditLogService.createLog({
+        entityType: 'content_card',
+        entityId: permissionData.card.id,
+        action: 'deleted',
+        userId: user.id,
+        teamId: permissionData.card.teamId,
+        metadata: {
+          title: permissionData.card.title,
+          stageId: permissionData.card.stageId,
+        },
+      })
+
       await deleteContentCard(permissionData.card.id)
       return NextResponse.json({ success: true })
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { getTeamCards, verifyTeamAccess, createContentCard } from '@/lib/db/utils'
+import { AuditLogService } from '@/lib/services/audit-log.service'
 import { z } from 'zod'
 
 const createCardSchema = z.object({
@@ -77,6 +78,19 @@ export async function POST(
       ...validatedData,
       teamId: teamId,
       createdBy: session.user.id,
+    })
+
+    // Log card creation
+    await AuditLogService.createLog({
+      entityType: 'content_card',
+      entityId: card.id,
+      action: 'created',
+      userId: session.user.id,
+      teamId: teamId,
+      metadata: {
+        title: card.title,
+        priority: card.priority,
+      },
     })
 
     return NextResponse.json(card, { status: 201 })

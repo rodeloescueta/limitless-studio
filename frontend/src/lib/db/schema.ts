@@ -7,6 +7,8 @@ export const contentPriorityEnum = pgEnum('content_priority', ['low', 'medium', 
 export const alertTypeEnum = pgEnum('alert_type', ['stage_overdue', 'deadline_missed', 'no_response', 'manual'])
 export const alertSeverityEnum = pgEnum('alert_severity', ['low', 'medium', 'high', 'critical'])
 export const alertStatusEnum = pgEnum('alert_status', ['open', 'acknowledged', 'resolved', 'escalated', 'dismissed'])
+export const auditEntityTypeEnum = pgEnum('audit_entity_type', ['content_card', 'subtask', 'comment', 'assignment', 'attachment'])
+export const auditActionEnum = pgEnum('audit_action', ['created', 'updated', 'deleted', 'moved'])
 
 // Users table
 export const users = pgTable('users', {
@@ -305,6 +307,28 @@ export const stageTimeConfigs = pgTable('stage_time_configs', {
   teamStageIdx: index('stage_time_configs_team_stage_idx').on(table.teamId, table.stageName),
 }))
 
+// Audit logs table for tracking all changes
+export const auditLogs = pgTable('audit_logs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  entityType: auditEntityTypeEnum('entity_type').notNull(),
+  entityId: uuid('entity_id').notNull(),
+  action: auditActionEnum('action').notNull(),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
+  teamId: uuid('team_id').references(() => teams.id, { onDelete: 'cascade' }).notNull(),
+
+  // Change tracking
+  changedFields: jsonb('changed_fields').$type<Record<string, { old: any; new: any }>>(),
+  metadata: jsonb('metadata').$type<Record<string, any>>(),
+
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  entityIdx: index('audit_logs_entity_idx').on(table.entityType, table.entityId),
+  userIdx: index('audit_logs_user_idx').on(table.userId),
+  teamIdx: index('audit_logs_team_idx').on(table.teamId),
+  actionIdx: index('audit_logs_action_idx').on(table.action),
+  createdAtIdx: index('audit_logs_created_at_idx').on(table.createdAt),
+}))
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   teamMemberships: many(teamMembers),
@@ -319,6 +343,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   notifications: many(notifications),
   sharedCards: many(cardTeamShares),
   activities: many(activityFeed),
+  auditLogs: many(auditLogs),
 }))
 
 export const teamsRelations = relations(teams, ({ one, many }) => ({
@@ -509,6 +534,17 @@ export const stageTimeConfigsRelations = relations(stageTimeConfigs, ({ one }) =
   }),
 }))
 
+export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
+  user: one(users, {
+    fields: [auditLogs.userId],
+    references: [users.id],
+  }),
+  team: one(teams, {
+    fields: [auditLogs.teamId],
+    references: [teams.id],
+  }),
+}))
+
 // Type exports
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
@@ -550,3 +586,10 @@ export type Alert = typeof alerts.$inferSelect
 export type NewAlert = typeof alerts.$inferInsert
 export type StageTimeConfig = typeof stageTimeConfigs.$inferSelect
 export type NewStageTimeConfig = typeof stageTimeConfigs.$inferInsert
+export type AuditLog = typeof auditLogs.$inferSelect
+export type NewAuditLog = typeof auditLogs.$inferInsert
+
+// Extended type for audit log with user details
+export type AuditLogWithUser = AuditLog & {
+  user: User | null
+}

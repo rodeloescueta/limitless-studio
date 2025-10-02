@@ -36,6 +36,7 @@ import { useCardDetails, useUpdateCard, useDeleteCard } from '@/lib/hooks/useCar
 import { CommentsPanel } from '@/components/comments/CommentsPanel'
 import { AttachmentsPanel } from '@/components/attachments/AttachmentsPanel'
 import { AssignmentPanel } from '@/components/assignments/AssignmentPanel'
+import { CardHistoryPanel } from '@/components/audit/CardHistoryPanel'
 import { RoleGate, EditAccess, usePermissions } from '@/components/auth/RoleGate'
 import { format } from 'date-fns'
 import { CalendarIcon, TrashIcon } from 'lucide-react'
@@ -174,12 +175,13 @@ export function CardDetailsModal({ cardId, isOpen, onClose }: CardDetailsModalPr
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-hidden">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="content">Content</TabsTrigger>
             <TabsTrigger value="assignments">Assignments</TabsTrigger>
             <TabsTrigger value="comments">Comments</TabsTrigger>
             <TabsTrigger value="attachments">Attachments</TabsTrigger>
+            <TabsTrigger value="history">History</TabsTrigger>
           </TabsList>
 
           <div className="mt-4 overflow-y-auto flex-1">
@@ -396,6 +398,10 @@ export function CardDetailsModal({ cardId, isOpen, onClose }: CardDetailsModalPr
 
             <TabsContent value="attachments" className="h-full">
               <AttachmentsPanel cardId={cardId} />
+            </TabsContent>
+
+            <TabsContent value="history" className="h-full">
+              <CardHistoryPanel cardId={cardId} />
             </TabsContent>
           </div>
         </Tabs>

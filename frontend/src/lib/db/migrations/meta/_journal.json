@@ -36,6 +36,13 @@
       "when": 1759205954780,
       "tag": "0004_steady_lockjaw",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1759416718903,
+      "tag": "0005_slow_valeria_richards",
+      "breakpoints": true
     }
   ]
 }

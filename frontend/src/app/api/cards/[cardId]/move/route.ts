@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { getContentCard, verifyTeamAccess, moveContentCard } from '@/lib/db/utils'
+import { AuditLogService } from '@/lib/services/audit-log.service'
+import { db } from '@/lib/db'
+import { stages } from '@/lib/db/schema'
+import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 
 const moveCardSchema = z.object({
@@ -41,7 +45,38 @@ export async function PUT(
     const body = await request.json()
     const { stageId, position } = moveCardSchema.parse(body)
 
+    // Get old and new stage names for audit log
+    const [oldStage] = await db
+      .select()
+      .from(stages)
+      .where(eq(stages.id, card.stageId))
+      .limit(1)
+
+    const [newStage] = await db
+      .select()
+      .from(stages)
+      .where(eq(stages.id, stageId))
+      .limit(1)
+
     const movedCard = await moveContentCard(cardId, stageId, position)
+
+    // Log card move if stage changed
+    if (card.stageId !== stageId && oldStage && newStage) {
+      await AuditLogService.createLog({
+        entityType: 'content_card',
+        entityId: cardId,
+        action: 'moved',
+        userId: session.user.id,
+        teamId: card.teamId,
+        metadata: {
+          fromStage: oldStage.name,
+          toStage: newStage.name,
+          fromStageId: card.stageId,
+          toStageId: stageId,
+        },
+      })
+    }
+
     return NextResponse.json(movedCard)
 
   } catch (error) {
