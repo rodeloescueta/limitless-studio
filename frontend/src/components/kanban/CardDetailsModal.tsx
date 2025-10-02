@@ -145,18 +145,18 @@ export function CardDetailsModal({ cardId, isOpen, onClose }: CardDetailsModalPr
               <Badge
                 className="text-xs font-normal"
                 style={{
-                  backgroundColor: card.stage.color || '#6b7280',
+                  backgroundColor: card.stage?.color || '#6b7280',
                   color: 'white'
                 }}
               >
-                {card.stage.name}
+                {card.stage?.name || 'Unknown'}
               </Badge>
             </div>
             <div className="flex items-center gap-2">
               <Badge className={priorityColors[card.priority]}>
                 {card.priority}
               </Badge>
-              <RoleGate stage={card.stage.name} action="delete">
+              <RoleGate stage={card.stage?.name || ''} action="delete">
                 <Button
                   variant="outline"
                   size="sm"
@@ -206,7 +206,7 @@ export function CardDetailsModal({ cardId, isOpen, onClose }: CardDetailsModalPr
                   )}
 
                   {/* Edit Form - Only visible with edit access */}
-                  <EditAccess stage={card.stage.name} fallback={null}>
+                  <EditAccess stage={card.stage?.name || ''} fallback={null}>
                     <Form {...form}>
                       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                         <FormField
@@ -342,7 +342,7 @@ export function CardDetailsModal({ cardId, isOpen, onClose }: CardDetailsModalPr
             </TabsContent>
 
             <TabsContent value="content">
-              <EditAccess stage={card.stage.name} fallback={
+              <EditAccess stage={card.stage?.name || ''} fallback={
                 <div>
                   <label className="text-sm font-medium">Content</label>
                   <div className="mt-2 p-4 bg-gray-50 rounded border min-h-[300px] whitespace-pre-wrap">
@@ -386,7 +386,7 @@ export function CardDetailsModal({ cardId, isOpen, onClose }: CardDetailsModalPr
               <AssignmentPanel
                 cardId={cardId}
                 teamId={card.teamId}
-                readonly={!permissions.canAssign(card.stage.name)}
+                readonly={!permissions.canAssign(card.stage?.name || '')}
               />
             </TabsContent>
 

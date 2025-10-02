@@ -305,7 +305,8 @@ export async function updateContentCard(cardId: string, data: {
   assignedTo?: string
   dueDate?: string
   tags?: string[]
-}): Promise<ContentCard> {
+  stageId?: string
+}): Promise<ContentCard & { assignedTo: User | null; createdBy: User; stage: Stage }> {
   const updateData: any = {
     updatedAt: new Date(),
   }
@@ -317,14 +318,20 @@ export async function updateContentCard(cardId: string, data: {
   if (data.assignedTo !== undefined) updateData.assignedTo = data.assignedTo
   if (data.dueDate !== undefined) updateData.dueDate = data.dueDate ? new Date(data.dueDate) : null
   if (data.tags !== undefined) updateData.tags = data.tags ? JSON.stringify(data.tags) : null
+  if (data.stageId !== undefined) updateData.stageId = data.stageId
 
-  const result = await db
+  await db
     .update(contentCards)
     .set(updateData)
     .where(eq(contentCards.id, cardId))
-    .returning()
 
-  return result[0]
+  // Fetch the updated card with all relationships
+  const updatedCard = await getContentCard(cardId)
+  if (!updatedCard) {
+    throw new Error('Card not found after update')
+  }
+
+  return updatedCard
 }
 
 export async function moveContentCard(cardId: string, newStageId: string, newPosition: number): Promise<ContentCard> {

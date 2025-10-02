@@ -4,6 +4,10 @@ import { authOptions } from '@/lib/auth'
 import { getContentCard, verifyTeamAccess, updateContentCard, deleteContentCard } from '@/lib/db/utils'
 import { withAuth, withPermission } from '@/lib/auth-middleware'
 import { z } from 'zod'
+import { db } from '@/lib/db'
+import { stages } from '@/lib/db/schema'
+import { eq } from 'drizzle-orm'
+import { canEditCard, normalizeStage } from '@/lib/permissions'
 
 const updateCardSchema = z.object({
   title: z.string().min(1).max(300).optional(),
@@ -13,6 +17,7 @@ const updateCardSchema = z.object({
   assignedTo: z.string().uuid().optional().nullable(),
   dueDate: z.string().datetime().optional().nullable(),
   tags: z.array(z.string()).optional(),
+  stageId: z.string().uuid().optional(),
 })
 
 export async function GET(
@@ -59,6 +64,50 @@ export const PUT = withPermission(
     try {
       const body = await request.json()
       const validatedData = updateCardSchema.parse(body)
+
+      // If moving to a different stage, verify user has permission for destination stage
+      if (validatedData.stageId && validatedData.stageId !== permissionData.card.stageId) {
+        // Get destination stage
+        const [destinationStage] = await db
+          .select()
+          .from(stages)
+          .where(eq(stages.id, validatedData.stageId))
+          .limit(1)
+
+        if (!destinationStage) {
+          return NextResponse.json(
+            { error: 'Invalid destination stage' },
+            { status: 400 }
+          )
+        }
+
+        // Verify destination stage belongs to same team
+        if (destinationStage.teamId !== permissionData.card.teamId) {
+          return NextResponse.json(
+            { error: 'Cannot move card to different team' },
+            { status: 400 }
+          )
+        }
+
+        // Check if user has edit permission for destination stage
+        const destinationStageName = normalizeStage(destinationStage.name)
+        if (!destinationStageName) {
+          return NextResponse.json(
+            { error: 'Invalid destination stage name' },
+            { status: 400 }
+          )
+        }
+
+        const hasDestinationAccess = canEditCard(user.role, destinationStageName)
+        if (!hasDestinationAccess) {
+          // Log detailed reason for debugging
+          console.warn(`Stage transition denied: user ${user.id} (${user.role}) cannot move card to ${destinationStageName}`)
+          return NextResponse.json(
+            { error: 'Forbidden' },
+            { status: 403 }
+          )
+        }
+      }
 
       const updatedCard = await updateContentCard(permissionData.card.id, validatedData)
       return NextResponse.json(updatedCard)

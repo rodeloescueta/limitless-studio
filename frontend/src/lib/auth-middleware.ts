@@ -46,7 +46,7 @@ export async function requirePermission(
   user: AuthenticatedUser | null,
   cardId: string,
   action: PermissionAction
-): Promise<{ allowed: boolean; card?: any; stage?: any; error?: string }> {
+): Promise<{ allowed: boolean; card?: any; stage?: any; error?: string; notFound?: boolean }> {
   if (!user) {
     return { allowed: false, error: 'Authentication required' }
   }
@@ -69,7 +69,7 @@ export async function requirePermission(
     .limit(1)
 
   if (!cardData || cardData.length === 0) {
-    return { allowed: false, error: 'Card not found' }
+    return { allowed: false, error: 'Card not found', notFound: true }
   }
 
   const card = cardData[0]
@@ -103,11 +103,16 @@ export async function requirePermission(
       allowed = false
   }
 
+  // Log permission denials for debugging
+  if (!allowed) {
+    console.warn(`Permission denied: user ${user.id} (${user.role}) attempted ${action} on card ${cardId} in stage ${stageName}`)
+  }
+
   return {
     allowed,
     card,
     stage: card.stage,
-    error: allowed ? undefined : `Insufficient permissions for ${action} action`
+    error: allowed ? undefined : 'Forbidden'
   }
 }
 
@@ -142,9 +147,11 @@ export function withPermission<T extends any[]>(
       const permissionCheck = await requirePermission(user, cardId, action)
 
       if (!permissionCheck.allowed) {
+        // Return 404 if resource not found, 403 for permission denial
+        const statusCode = permissionCheck.notFound ? 404 : 403
         return NextResponse.json(
           { error: permissionCheck.error || 'Access denied' },
-          { status: 403 }
+          { status: statusCode }
         )
       }
 

@@ -520,6 +520,16 @@ export type Stage = typeof stages.$inferSelect
 export type NewStage = typeof stages.$inferInsert
 export type ContentCard = typeof contentCards.$inferSelect
 export type NewContentCard = typeof contentCards.$inferInsert
+
+// Extended type for card with relationships (used by API responses)
+export type ContentCardWithRelations = ContentCard & {
+  stage: Stage
+  assignedTo: User | null
+  createdBy: User
+  contentType?: string
+  commentsCount?: number
+  attachmentsCount?: number
+}
 export type Comment = typeof comments.$inferSelect
 export type NewComment = typeof comments.$inferInsert
 export type CommentMention = typeof commentMentions.$inferSelect
