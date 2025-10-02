@@ -25,6 +25,8 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      // Exclude server-only packages from client bundle
+      serverExternalPackages: ['bull', 'ioredis'],
 };
 
 export default withBundleAnalyzer(nextConfig);

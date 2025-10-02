@@ -1,21 +1,31 @@
-import Queue from 'bull'
-import Redis from 'ioredis'
+// Type-only imports to avoid bundling Bull for client-side
+import type { Queue as BullQueue } from 'bull'
 
-// Only initialize Redis client on server side
-const isServer = typeof window === 'undefined'
+let notificationQueueInstance: BullQueue<NotificationJobData> | null = null
 
-let redisClient: Redis | null = null
-let notificationQueueInstance: Queue.Queue<NotificationJobData> | null = null
+// Lazy initialization - only import Bull when actually needed (server-side only)
+async function getQueue() {
+  if (typeof window !== 'undefined') {
+    // Client-side - queue not available
+    return null
+  }
 
-if (isServer && process.env.REDIS_URL) {
-  redisClient = new Redis(process.env.REDIS_URL, {
-    maxRetriesPerRequest: null,
-    enableReadyCheck: false,
-  })
+  if (!notificationQueueInstance && process.env.REDIS_URL) {
+    // Dynamic import to prevent client-side bundling
+    const Bull = (await import('bull')).default
+    const Redis = (await import('ioredis')).default
 
-  notificationQueueInstance = new Queue('notifications', {
-    createClient: () => redisClient!.duplicate(),
-  })
+    const redisClient = new Redis(process.env.REDIS_URL, {
+      maxRetriesPerRequest: null,
+      enableReadyCheck: false,
+    })
+
+    notificationQueueInstance = new Bull('notifications', {
+      createClient: () => redisClient.duplicate(),
+    })
+  }
+
+  return notificationQueueInstance
 }
 
 export interface NotificationJobData {
@@ -30,15 +40,23 @@ export interface NotificationJobData {
 }
 
 export async function enqueueNotification(data: NotificationJobData) {
-  if (!isServer || !notificationQueueInstance) {
-    console.warn('Queue not available - this should only be called server-side')
+  if (typeof window !== 'undefined') {
+    console.warn('⚠️ Queue not available on client-side')
     return null
   }
 
   try {
-    const job = await notificationQueueInstance.add(data, {
+    const queue = await getQueue()
+
+    if (!queue) {
+      console.warn('⚠️ Queue not initialized - Redis URL may be missing')
+      return null
+    }
+
+    const job = await queue.add(data, {
       priority: data.type === 'deadline' ? 1 : 5,
     })
+
     console.log(`✅ Enqueued notification job ${job.id}: ${data.type} for user ${data.userId}`)
     return job
   } catch (error) {
@@ -47,4 +65,7 @@ export async function enqueueNotification(data: NotificationJobData) {
   }
 }
 
-export const notificationQueue = notificationQueueInstance
+// Export function to get queue instance (for admin routes)
+export async function getNotificationQueue() {
+  return getQueue()
+}

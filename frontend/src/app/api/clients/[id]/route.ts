@@ -8,7 +8,7 @@ import { eq, and } from 'drizzle-orm'
 // GET /api/clients/[id] - Get client details
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -17,7 +17,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const clientId = params.id
+    const { id: clientId } = await params
 
     // Check if user has access (admin or team member)
     const isAdmin = session.user.role === 'admin'
@@ -64,7 +64,7 @@ export async function GET(
 // PUT /api/clients/[id] - Update client
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -78,7 +78,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const clientId = params.id
+    const { id: clientId } = await params
     const body = await request.json()
     const {
       name,
@@ -180,7 +180,7 @@ export async function PUT(
 // DELETE /api/clients/[id] - Delete client
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -194,7 +194,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const clientId = params.id
+    const { id: clientId } = await params
 
     // Delete team (cascade will handle related records)
     await db
