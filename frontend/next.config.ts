@@ -27,13 +27,10 @@ const nextConfig: NextConfig = {
       },
       // Exclude server-only packages from client bundle
       serverExternalPackages: ['bull', 'ioredis'],
-      // Temporarily disable TypeScript checking during build for production
+      // Temporarily disable TypeScript checking during build
+      // TODO: Fix all remaining TypeScript errors in API routes and components
       typescript: {
         ignoreBuildErrors: true,
-      },
-      // Disable ESLint during builds
-      eslint: {
-        ignoreDuringBuilds: true,
       },
 };
 

@@ -53,7 +53,8 @@ export async function GET(
 
   } catch (error) {
     console.error('Error fetching card:', error)
-    return NextResponse.json(
+    
+return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     )
@@ -63,7 +64,8 @@ export async function GET(
 export const PUT = withPermission(
   async (request: NextRequest, { params }: { params: Promise<{ cardId: string }> }) => {
     const { cardId } = await params
-    return cardId
+    
+return cardId
   },
   'write',
   async (user, permissionData, request: NextRequest) => {
@@ -108,7 +110,8 @@ export const PUT = withPermission(
         if (!hasDestinationAccess) {
           // Log detailed reason for debugging
           console.warn(`Stage transition denied: user ${user.id} (${user.role}) cannot move card to ${destinationStageName}`)
-          return NextResponse.json(
+          
+return NextResponse.json(
             { error: 'Forbidden' },
             { status: 403 }
           )
@@ -147,7 +150,8 @@ export const PUT = withPermission(
       }
 
       console.error('Error updating card:', error)
-      return NextResponse.json(
+      
+return NextResponse.json(
         { error: 'Internal server error' },
         { status: 500 }
       )
@@ -158,7 +162,8 @@ export const PUT = withPermission(
 export const DELETE = withPermission(
   async (request: NextRequest, { params }: { params: Promise<{ cardId: string }> }) => {
     const { cardId } = await params
-    return cardId
+    
+return cardId
   },
   'delete',
   async (user, permissionData) => {
@@ -177,11 +182,13 @@ export const DELETE = withPermission(
       })
 
       await deleteContentCard(permissionData.card.id)
-      return NextResponse.json({ success: true })
+      
+return NextResponse.json({ success: true })
 
     } catch (error) {
       console.error('Error deleting card:', error)
-      return NextResponse.json(
+      
+return NextResponse.json(
         { error: 'Internal server error' },
         { status: 500 }
       )

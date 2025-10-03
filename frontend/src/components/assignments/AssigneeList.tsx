@@ -42,7 +42,8 @@ export function AssigneeList({
       approver: 'bg-purple-100 text-purple-800',
       collaborator: 'bg-orange-100 text-orange-800',
     }
-    return colors[role as keyof typeof colors] || colors.primary
+    
+return colors[role as keyof typeof colors] || colors.primary
   }
 
   const getUserRoleColor = (role: string) => {
@@ -55,7 +56,8 @@ export function AssigneeList({
       member: 'bg-gray-100 text-gray-800',
       client: 'bg-pink-100 text-pink-800',
     }
-    return colors[role as keyof typeof colors] || colors.member
+    
+return colors[role as keyof typeof colors] || colors.member
   }
 
   return (

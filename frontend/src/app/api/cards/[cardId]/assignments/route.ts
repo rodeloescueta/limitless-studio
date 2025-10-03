@@ -72,7 +72,8 @@ export async function GET(
 
   } catch (error) {
     console.error('Error fetching assignments:', error)
-    return NextResponse.json(
+    
+return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     )
@@ -83,7 +84,8 @@ export async function GET(
 export const POST = withPermission(
   async (request: NextRequest, { params }: { params: Promise<{ cardId: string }> }) => {
     const { cardId } = await params
-    return cardId
+    
+return cardId
   },
   'assign',
   async (user, permissionData, request: NextRequest) => {
@@ -175,7 +177,8 @@ export const POST = withPermission(
       }
 
       console.error('Error creating assignment:', error)
-      return NextResponse.json(
+      
+return NextResponse.json(
         { error: 'Internal server error' },
         { status: 500 }
       )

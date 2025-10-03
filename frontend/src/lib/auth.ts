@@ -50,7 +50,8 @@ export const authOptions: NextAuthOptions = {
           }
         } catch (error) {
           console.error('Authorization error:', error)
-          return null
+          
+return null
         }
       },
     }),
@@ -66,7 +67,8 @@ export const authOptions: NextAuthOptions = {
         token.role = user.role
         token.isFirstLogin = user.isFirstLogin
       }
-      return token
+      
+return token
     },
     async session({ session, token }) {
       if (token) {
@@ -74,7 +76,8 @@ export const authOptions: NextAuthOptions = {
         session.user.role = token.role as string
         session.user.isFirstLogin = token.isFirstLogin as boolean
       }
-      return session
+      
+return session
     },
   },
   session: {

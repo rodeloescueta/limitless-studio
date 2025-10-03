@@ -23,11 +23,13 @@ export async function GET(
     }
 
     const stages = await getTeamStages(teamId)
-    return NextResponse.json(stages)
+    
+return NextResponse.json(stages)
 
   } catch (error) {
     console.error('Error fetching team stages:', error)
-    return NextResponse.json(
+    
+return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     )

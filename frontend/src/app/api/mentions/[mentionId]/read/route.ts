@@ -45,7 +45,8 @@ export async function POST(
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error marking mention as read:', error)
-    return NextResponse.json(
+    
+return NextResponse.json(
       { error: 'Failed to mark mention as read' },
       { status: 500 }
     )

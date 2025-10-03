@@ -53,7 +53,8 @@ export function useUpdateComment() {
         { queryKey: commentKeys.lists() },
         (old) => {
           if (!old) return old
-          return old.map(comment =>
+          
+return old.map(comment =>
             comment.id === updatedComment.id ? updatedComment : comment
           )
         }
@@ -74,7 +75,8 @@ export function useDeleteComment() {
         { queryKey: commentKeys.lists() },
         (old) => {
           if (!old) return old
-          return old.filter(comment => comment.id !== commentId)
+          
+return old.filter(comment => comment.id !== commentId)
         }
       )
     },

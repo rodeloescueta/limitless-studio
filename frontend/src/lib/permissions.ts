@@ -112,7 +112,8 @@ export function canEditCard(userRole: UserRole, stageName: StageName): boolean {
  */
 export function canDeleteCard(userRole: UserRole, stageName: StageName): boolean {
   if (userRole === 'admin') return true
-  return hasStageAccess(userRole, stageName, 'delete')
+  
+return hasStageAccess(userRole, stageName, 'delete')
 }
 
 /**
@@ -151,7 +152,8 @@ export function canApprove(userRole: UserRole, stageName: StageName): boolean {
  */
 export function hasGlobalPermission(userRole: UserRole, permission: string): boolean {
   const globalPerms = GLOBAL_PERMISSIONS[userRole] || []
-  return globalPerms.includes(permission) || userRole === 'admin'
+  
+return globalPerms.includes(permission) || userRole === 'admin'
 }
 
 /**
@@ -159,7 +161,8 @@ export function hasGlobalPermission(userRole: UserRole, permission: string): boo
  */
 export function getAccessibleStages(userRole: UserRole): StageName[] {
   const stages: StageName[] = ['research', 'envision', 'assemble', 'connect', 'hone']
-  return stages.filter(stage => hasStageAccess(userRole, stage, 'read'))
+  
+return stages.filter(stage => hasStageAccess(userRole, stage, 'read'))
 }
 
 /**
@@ -174,7 +177,8 @@ export function getStagePermissionLevel(userRole: UserRole, stageName: StageName
  */
 export function canViewAllCards(userRole: UserRole): boolean {
   const globalPerms = GLOBAL_PERMISSIONS[userRole] || []
-  return globalPerms.includes('view_all') || globalPerms.includes('global_view') || userRole === 'admin'
+  
+return globalPerms.includes('view_all') || globalPerms.includes('global_view') || userRole === 'admin'
 }
 
 /**
@@ -208,7 +212,8 @@ export function filterCardsByPermissions<T extends { stage: { name: string } }>(
 
   return cards.filter(card => {
     const stageName = normalizeStage(card.stage)
-    return stageName && hasStageAccess(userRole, stageName, 'read')
+    
+return stageName && hasStageAccess(userRole, stageName, 'read')
   })
 }
 
@@ -238,6 +243,7 @@ export function getPermissionDescription(userRole: UserRole, stageName: StageNam
 export function canDragCard(userRole: UserRole, stageName: StageName): boolean {
   const level = getStagePermissionLevel(userRole, stageName)
   // Only allow drag-drop for full access
+
   return level === 'full'
 }
 
@@ -246,5 +252,6 @@ export function canDragCard(userRole: UserRole, stageName: StageName): boolean {
  */
 export function isStageReadOnly(userRole: UserRole, stageName: StageName): boolean {
   const level = getStagePermissionLevel(userRole, stageName)
+
   return level === 'read_only' || level === 'comment_approve'
 }

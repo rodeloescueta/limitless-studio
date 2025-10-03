@@ -83,7 +83,8 @@ export async function GET(
 
   } catch (error) {
     console.error('Error fetching notifications:', error)
-    return NextResponse.json(
+    
+return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     )
@@ -124,7 +125,8 @@ export async function PUT(
 
   } catch (error) {
     console.error('Error marking notifications as read:', error)
-    return NextResponse.json(
+    
+return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     )

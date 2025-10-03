@@ -78,7 +78,8 @@ export function CardHistoryPanel({ cardId }: CardHistoryPanelProps) {
       if (!response.ok) {
         throw new Error('Failed to fetch audit logs')
       }
-      return response.json()
+      
+return response.json()
     },
     enabled: !!cardId,
   })
@@ -91,7 +92,8 @@ export function CardHistoryPanel({ cardId }: CardHistoryPanelProps) {
       } else {
         newSet.add(logId)
       }
-      return newSet
+      
+return newSet
     })
   }
 

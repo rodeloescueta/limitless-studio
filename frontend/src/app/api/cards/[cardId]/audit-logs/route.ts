@@ -83,7 +83,8 @@ export async function GET(
     }
 
     console.error('Error fetching audit logs:', error)
-    return NextResponse.json(
+    
+return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     )

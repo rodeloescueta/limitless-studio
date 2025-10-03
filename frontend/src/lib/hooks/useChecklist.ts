@@ -51,7 +51,8 @@ export function useToggleChecklistItem() {
         checklistKeys.list(cardId),
         (old) => {
           if (!old) return old
-          return old.map(item =>
+          
+return old.map(item =>
             item.id === updatedItem.id ? updatedItem : item
           )
         }
@@ -73,7 +74,8 @@ export function useDeleteChecklistItem() {
         checklistKeys.list(cardId),
         (old) => {
           if (!old) return old
-          return old.filter(item => item.id !== itemId)
+          
+return old.filter(item => item.id !== itemId)
         }
       )
     },

@@ -62,7 +62,8 @@ export async function DELETE(
 
   } catch (error) {
     console.error('Error deleting assignment:', error)
-    return NextResponse.json(
+    
+return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     )
@@ -110,7 +111,8 @@ export async function PUT(
 
   } catch (error) {
     console.error('Error updating assignment:', error)
-    return NextResponse.json(
+    
+return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     )

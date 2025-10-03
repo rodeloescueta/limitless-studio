@@ -66,7 +66,8 @@ export function ClientsDataTable({ clients }: ClientsDataTableProps) {
       },
       cell: ({ row }) => {
         const client = row.original
-        return (
+        
+return (
           <div className="font-medium">
             {client.team.clientCompanyName || client.team.name}
           </div>
@@ -89,7 +90,8 @@ export function ClientsDataTable({ clients }: ClientsDataTableProps) {
       },
       cell: ({ row }) => {
         const industry = row.original.team.industry
-        return industry ? (
+        
+return industry ? (
           <Badge variant="secondary">{industry}</Badge>
         ) : (
           <span className="text-muted-foreground text-sm">-</span>
@@ -101,7 +103,8 @@ export function ClientsDataTable({ clients }: ClientsDataTableProps) {
       header: 'Contact Email',
       cell: ({ row }) => {
         const email = row.original.team.contactEmail
-        return email ? (
+        
+return email ? (
           <span className="text-sm">{email}</span>
         ) : (
           <span className="text-muted-foreground text-sm">-</span>
@@ -113,7 +116,8 @@ export function ClientsDataTable({ clients }: ClientsDataTableProps) {
       header: 'Description',
       cell: ({ row }) => {
         const description = row.original.team.description
-        return description ? (
+        
+return description ? (
           <div className="max-w-[300px] truncate text-sm text-muted-foreground">
             {description}
           </div>
@@ -138,7 +142,8 @@ export function ClientsDataTable({ clients }: ClientsDataTableProps) {
       },
       cell: ({ row }) => {
         const date = new Date(row.original.team.createdAt)
-        return <span className="text-sm">{date.toLocaleDateString()}</span>
+        
+return <span className="text-sm">{date.toLocaleDateString()}</span>
       },
     },
   ]

@@ -63,7 +63,8 @@ export async function GET(
     return NextResponse.json(mentions)
   } catch (error) {
     console.error('Error fetching mentions:', error)
-    return NextResponse.json(
+    
+return NextResponse.json(
       { error: 'Failed to fetch mentions' },
       { status: 500 }
     )

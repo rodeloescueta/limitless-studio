@@ -48,7 +48,8 @@ export default function QueueMonitoringPage() {
   useEffect(() => {
     fetchStats()
     const interval = setInterval(fetchStats, 5000) // Refresh every 5 seconds
-    return () => clearInterval(interval)
+    
+return () => clearInterval(interval)
   }, [])
 
   if (loading && !stats) {

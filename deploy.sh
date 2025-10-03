@@ -122,8 +122,8 @@ run_migrations() {
     # Wait for database to be ready
     sleep 5
 
-    # Run migrations using Drizzle
-    docker compose -f "$COMPOSE_FILE" exec -T web npx drizzle-kit push:pg --force || {
+    # Run migrations using Drizzle Kit push (code-first approach)
+    docker compose -f "$COMPOSE_FILE" exec -T web npx drizzle-kit push || {
         log_warn "Migration command failed - check database connection"
     }
 

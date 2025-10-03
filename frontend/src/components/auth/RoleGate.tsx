@@ -190,36 +190,43 @@ export function usePermissions() {
     hasStageAccess: (stage: StageName | string, action: PermissionAction) => {
       if (!userRole) return false
       const stageName = normalizeStage(stage)
-      return stageName ? hasStageAccess(userRole, stageName, action) : false
+      
+return stageName ? hasStageAccess(userRole, stageName, action) : false
     },
     canEdit: (stage: StageName | string) => {
       if (!userRole) return false
       const stageName = normalizeStage(stage)
-      return stageName ? canEditCard(userRole, stageName) : false
+      
+return stageName ? canEditCard(userRole, stageName) : false
     },
     canDelete: (stage: StageName | string) => {
       if (!userRole) return false
       const stageName = normalizeStage(stage)
-      return stageName ? canDeleteCard(userRole, stageName) : false
+      
+return stageName ? canDeleteCard(userRole, stageName) : false
     },
     canAssign: (stage?: StageName | string) => {
       if (!userRole) return false
       const stageName = stage ? normalizeStage(stage) : undefined
-      return canAssignUsers(userRole, stageName)
+      
+return canAssignUsers(userRole, stageName)
     },
     canComment: (stage: StageName | string) => {
       if (!userRole) return false
       const stageName = normalizeStage(stage)
-      return stageName ? canComment(userRole, stageName) : false
+      
+return stageName ? canComment(userRole, stageName) : false
     },
     canApprove: (stage: StageName | string) => {
       if (!userRole) return false
       const stageName = normalizeStage(stage)
-      return stageName ? canApprove(userRole, stageName) : false
+      
+return stageName ? canApprove(userRole, stageName) : false
     },
     hasGlobalPermission: (permission: string) => {
       if (!userRole) return false
-      return hasGlobalPermission(userRole, permission)
+      
+return hasGlobalPermission(userRole, permission)
     },
     isAdmin: userRole === 'admin',
     isLoggedIn: !!userRole,

@@ -33,7 +33,8 @@ export async function seedTestUsers() {
 
     if (usersToCreate.length === 0) {
       console.log('✅ All test users already exist')
-      return
+      
+return
     }
 
     // Create users with hashed passwords

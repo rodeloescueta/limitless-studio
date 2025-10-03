@@ -12,11 +12,13 @@ export async function GET(request: NextRequest) {
     }
 
     const teams = await getUserTeams(session.user.id)
-    return NextResponse.json(teams)
+    
+return NextResponse.json(teams)
 
   } catch (error) {
     console.error('Error fetching user teams:', error)
-    return NextResponse.json(
+    
+return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     )

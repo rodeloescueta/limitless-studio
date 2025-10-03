@@ -42,7 +42,8 @@ export interface NotificationJobData {
 export async function enqueueNotification(data: NotificationJobData) {
   if (typeof window !== 'undefined') {
     console.warn('⚠️ Queue not available on client-side')
-    return null
+    
+return null
   }
 
   try {
@@ -50,7 +51,8 @@ export async function enqueueNotification(data: NotificationJobData) {
 
     if (!queue) {
       console.warn('⚠️ Queue not initialized - Redis URL may be missing')
-      return null
+      
+return null
     }
 
     const job = await queue.add(data, {
@@ -58,7 +60,8 @@ export async function enqueueNotification(data: NotificationJobData) {
     })
 
     console.log(`✅ Enqueued notification job ${job.id}: ${data.type} for user ${data.userId}`)
-    return job
+    
+return job
   } catch (error) {
     console.error('❌ Failed to enqueue notification:', error)
     throw error

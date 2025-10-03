@@ -4,9 +4,8 @@ import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, u
 import { SortableContext, arrayMove } from '@dnd-kit/sortable'
 import { useState } from 'react'
 import { useSession } from 'next-auth/react'
-import { useTeamCards } from '@/lib/hooks/useCards'
+import { useTeamCards , useCardMovement } from '@/lib/hooks/useCards'
 import { useTeamStages } from '@/lib/hooks/useTeams'
-import { useCardMovement } from '@/lib/hooks/useCards'
 import { KanbanColumn } from './KanbanColumn'
 import { ContentCard } from './ContentCard'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -71,7 +70,8 @@ export function KanbanBoard({ teamId }: KanbanBoardProps) {
     })
 
     console.log('Card collisions:', cardCollisions)
-    return cardCollisions
+    
+return cardCollisions
   }
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -91,13 +91,15 @@ export function KanbanBoard({ teamId }: KanbanBoardProps) {
 
     if (!over) {
       console.log('Drag cancelled: no target')
-      return
+      
+return
     }
 
     const sourceCard = accessibleCards.find(c => c.id === active.id)
     if (!sourceCard) {
       console.log('Source card not found')
-      return
+      
+return
     }
 
     // Get the target stage ID and position
@@ -118,7 +120,8 @@ export function KanbanBoard({ teamId }: KanbanBoardProps) {
         console.log('Dropped on card:', over.id, 'in stage:', targetStageId)
       } else {
         console.log('Target card not found')
-        return
+        
+return
       }
     } else {
       // Try to find stage from DOM hierarchy
@@ -130,14 +133,16 @@ export function KanbanBoard({ teamId }: KanbanBoardProps) {
         targetPosition = accessibleCards.filter(c => c.stageId === stageId).length + 1
       } else {
         console.log('Could not determine target stage')
-        return
+        
+return
       }
     }
 
     // Don't move if it's the same position
     if (sourceCard.stageId === targetStageId && sourceCard.position === targetPosition) {
       console.log('Same position, no move needed')
-      return
+      
+return
     }
 
     console.log('Moving card:', {

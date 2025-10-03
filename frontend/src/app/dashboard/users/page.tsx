@@ -54,13 +54,15 @@ export default function UsersPage() {
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/auth/login')
-      return
+      
+return
     }
 
     if (session?.user?.role !== 'admin') {
       toast.error('Access denied. Admin role required.')
       router.push('/dashboard')
-      return
+      
+return
     }
 
     fetchUsers()

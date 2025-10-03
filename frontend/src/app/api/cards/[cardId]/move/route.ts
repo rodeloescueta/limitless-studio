@@ -120,7 +120,8 @@ export async function PUT(
     }
 
     console.error('Error moving card:', error)
-    return NextResponse.json(
+    
+return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     )

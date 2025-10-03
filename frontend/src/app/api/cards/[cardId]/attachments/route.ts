@@ -148,7 +148,8 @@ export async function POST(
 
   } catch (error) {
     console.error('Upload error:', error)
-    return NextResponse.json(
+    
+return NextResponse.json(
       { error: 'Failed to upload file' },
       { status: 500 }
     )
@@ -209,7 +210,8 @@ export async function GET(
 
   } catch (error) {
     console.error('Get attachments error:', error)
-    return NextResponse.json(
+    
+return NextResponse.json(
       { error: 'Failed to fetch attachments' },
       { status: 500 }
     )

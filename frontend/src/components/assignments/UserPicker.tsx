@@ -52,7 +52,8 @@ export function UserPicker({
       member: 'bg-gray-100 text-gray-800',
       client: 'bg-pink-100 text-pink-800',
     }
-    return colors[role as keyof typeof colors] || colors.member
+    
+return colors[role as keyof typeof colors] || colors.member
   }
 
   return (

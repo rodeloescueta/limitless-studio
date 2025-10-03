@@ -17,7 +17,8 @@ export async function seedClients() {
 
   if (!adminUser) {
     console.error('❌ Admin user not found. Please run the main seed script first.')
-    return
+    
+return
   }
 
   const testClients = [

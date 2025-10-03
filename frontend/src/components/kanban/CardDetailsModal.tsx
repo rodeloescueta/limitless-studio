@@ -494,7 +494,8 @@ export function CardDetailsModal({ cardId, isOpen, onClose }: CardDetailsModalPr
                                     <SelectContent>
                                       {Object.entries(priorityConfig).map(([value, config]) => {
                                         const Icon = config.icon
-                                        return (
+                                        
+return (
                                           <SelectItem key={value} value={value}>
                                             <div className="flex items-center gap-2">
                                               <Icon className="h-4 w-4" />

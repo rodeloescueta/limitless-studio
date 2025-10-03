@@ -94,13 +94,15 @@ export default function EditUserPage() {
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/auth/login')
-      return
+      
+return
     }
 
     if (session?.user?.role !== 'admin') {
       toast.error('Access denied. Admin role required.')
       router.push('/dashboard/users')
-      return
+      
+return
     }
 
     fetchUser()
@@ -113,7 +115,8 @@ export default function EditUserPage() {
       if (response.status === 404) {
         toast.error('User not found')
         router.push('/dashboard/users')
-        return
+        
+return
       }
 
       if (!response.ok) {
@@ -171,7 +174,8 @@ export default function EditUserPage() {
     }
 
     setErrors(newErrors)
-    return isValid
+    
+return isValid
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -179,7 +183,8 @@ export default function EditUserPage() {
 
     if (!validateForm()) {
       toast.error('Please fix the validation errors')
-      return
+      
+return
     }
 
     setSaving(true)

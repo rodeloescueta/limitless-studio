@@ -110,7 +110,8 @@ export function ChecklistPanel({ cardId, readonly = false }: ChecklistPanelProps
   const handleDelete = async (itemId: string, isCustom: boolean) => {
     if (!isCustom) {
       toast.error('Cannot delete template-based items')
-      return
+      
+return
     }
 
     try {

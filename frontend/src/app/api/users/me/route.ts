@@ -18,11 +18,13 @@ export async function GET(request: NextRequest) {
 
     // Return user without password hash
     const { passwordHash, ...userWithoutPassword } = user
-    return NextResponse.json(userWithoutPassword)
+    
+return NextResponse.json(userWithoutPassword)
 
   } catch (error) {
     console.error('Error fetching user profile:', error)
-    return NextResponse.json(
+    
+return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     )

@@ -41,11 +41,13 @@ export async function GET(
     }
 
     const cards = await getTeamCards(teamId)
-    return NextResponse.json(cards)
+    
+return NextResponse.json(cards)
 
   } catch (error) {
     console.error('Error fetching team cards:', error)
-    return NextResponse.json(
+    
+return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     )
@@ -109,7 +111,8 @@ export async function POST(
     }
 
     console.error('Error creating card:', error)
-    return NextResponse.json(
+    
+return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     )

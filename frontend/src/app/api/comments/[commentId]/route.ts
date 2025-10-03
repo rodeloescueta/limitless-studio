@@ -84,7 +84,8 @@ export async function PUT(
     }
 
     console.error('Error updating comment:', error)
-    return NextResponse.json(
+    
+return NextResponse.json(
       { error: 'Failed to update comment' },
       { status: 500 }
     )
@@ -141,7 +142,8 @@ export async function DELETE(
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error deleting comment:', error)
-    return NextResponse.json(
+    
+return NextResponse.json(
       { error: 'Failed to delete comment' },
       { status: 500 }
     )

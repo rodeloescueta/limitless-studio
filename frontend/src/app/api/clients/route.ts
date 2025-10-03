@@ -33,7 +33,8 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Error fetching clients:', error)
-    return NextResponse.json(
+    
+return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     )
@@ -124,7 +125,8 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Error creating client:', error)
-    return NextResponse.json(
+    
+return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     )

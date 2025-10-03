@@ -5,7 +5,7 @@ export default defineConfig({
   out: './src/lib/db/migrations',
   dialect: 'postgresql',
   dbCredentials: {
-    url: 'postgresql://postgres:devPassword123!@localhost:5432/content_reach_hub'
+    url: process.env.DATABASE_URL || 'postgresql://postgres:devPassword123!@localhost:5432/content_reach_hub'
   },
   verbose: true,
   strict: true,

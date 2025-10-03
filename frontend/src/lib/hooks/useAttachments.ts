@@ -39,7 +39,8 @@ export function useCardAttachments(cardId: string) {
       if (!response.ok) {
         throw new Error('Failed to fetch attachments')
       }
-      return response.json()
+      
+return response.json()
     },
     enabled: !!cardId,
   })
@@ -133,7 +134,8 @@ export function getFileIcon(mimeType: string): string {
   if (mimeType.includes('sheet') || mimeType.includes('excel')) return '📊'
   if (mimeType === 'text/plain') return '📄'
   if (mimeType === 'text/csv') return '📊'
-  return '📎'
+  
+return '📎'
 }
 
 // Helper function to check if file is an image for preview

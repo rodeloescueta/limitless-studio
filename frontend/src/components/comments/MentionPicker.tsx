@@ -67,7 +67,8 @@ export function MentionPicker({ query, onSelect, onClose }: MentionPickerProps) 
     }
 
     document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
+    
+return () => document.removeEventListener('keydown', handleKeyDown)
   }, [filteredMembers, selectedIndex, onSelect, onClose])
 
   if (isLoading) {

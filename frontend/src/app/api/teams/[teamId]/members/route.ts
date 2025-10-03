@@ -38,7 +38,8 @@ export async function GET(
 
   } catch (error) {
     console.error('Error fetching team members:', error)
-    return NextResponse.json(
+    
+return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     )

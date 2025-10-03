@@ -149,7 +149,8 @@ export function withPermission<T extends any[]>(
       if (!permissionCheck.allowed) {
         // Return 404 if resource not found, 403 for permission denial
         const statusCode = permissionCheck.notFound ? 404 : 403
-        return NextResponse.json(
+        
+return NextResponse.json(
           { error: permissionCheck.error || 'Access denied' },
           { status: statusCode }
         )
@@ -158,7 +159,8 @@ export function withPermission<T extends any[]>(
       return handler(user, permissionCheck, ...args)
     } catch (error) {
       console.error('Permission check error:', error)
-      return NextResponse.json(
+      
+return NextResponse.json(
         { error: 'Permission validation failed' },
         { status: 500 }
       )

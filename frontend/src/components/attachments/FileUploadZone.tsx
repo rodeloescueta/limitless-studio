@@ -50,7 +50,8 @@ export function FileUploadZone({ cardId, className }: FileUploadZoneProps) {
         setUploadProgress(prev => {
           if (prev === null) return 0
           if (prev >= 90) return prev
-          return prev + Math.random() * 20
+          
+return prev + Math.random() * 20
         })
       }, 200)
 

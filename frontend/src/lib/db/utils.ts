@@ -7,12 +7,14 @@ import bcrypt from 'bcrypt'
 // User utilities
 export async function getUserById(userId: string): Promise<User | undefined> {
   const result = await db.select().from(users).where(eq(users.id, userId)).limit(1)
-  return result[0]
+  
+return result[0]
 }
 
 export async function getUserByEmail(email: string): Promise<User | undefined> {
   const result = await db.select().from(users).where(eq(users.email, email)).limit(1)
-  return result[0]
+  
+return result[0]
 }
 
 export async function verifyUserPassword(email: string, password: string): Promise<User | null> {
@@ -20,7 +22,8 @@ export async function verifyUserPassword(email: string, password: string): Promi
   if (!user) return null
 
   const isValidPassword = await bcrypt.compare(password, user.passwordHash)
-  return isValidPassword ? user : null
+  
+return isValidPassword ? user : null
 }
 
 export async function updateUserPassword(userId: string, newPassword: string): Promise<void> {
@@ -85,7 +88,8 @@ export async function verifyTeamAccess(userId: string, teamId: string): Promise<
 
 export async function getTeam(teamId: string): Promise<Team | undefined> {
   const result = await db.select().from(teams).where(eq(teams.id, teamId)).limit(1)
-  return result[0]
+  
+return result[0]
 }
 
 // Stage utilities
@@ -284,7 +288,8 @@ export async function getContentCard(cardId: string): Promise<(ContentCard & {
   if (result.length === 0) return undefined
 
   const row = result[0]
-  return {
+  
+return {
     id: row.id,
     teamId: row.teamId,
     stageId: row.stageId,
