@@ -3,34 +3,15 @@
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { Building2, Plus, Search } from 'lucide-react'
+import { Building2, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { ClientOnboardingWizard } from '@/components/clients/ClientOnboardingWizard'
+import { ClientsDataTable, type Client } from '@/components/clients/ClientsDataTable'
 import { toast } from 'sonner'
-
-interface Client {
-  team: {
-    id: string
-    name: string
-    clientCompanyName?: string
-    industry?: string
-    contactEmail?: string
-    description?: string
-    createdAt: string
-  }
-  profile?: {
-    contentPillars?: string[]
-  }
-}
 
 export default function ClientsPage() {
   const { data: session, status } = useSession()
@@ -38,7 +19,6 @@ export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
   const [showWizard, setShowWizard] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -68,12 +48,6 @@ export default function ClientsPage() {
       setLoading(false)
     }
   }
-
-  const filteredClients = clients.filter(client =>
-    client.team.clientCompanyName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    client.team.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    client.team.industry?.toLowerCase().includes(searchQuery.toLowerCase())
-  )
 
   if (status === 'loading' || loading) {
     return (
@@ -117,24 +91,8 @@ export default function ClientsPage() {
         </Button>
       </div>
 
-      {/* Search */}
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search clients..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        <Badge variant="secondary">
-          {filteredClients.length} {filteredClients.length === 1 ? 'client' : 'clients'}
-        </Badge>
-      </div>
-
-      {/* Client Grid */}
-      {filteredClients.length === 0 && searchQuery === '' ? (
+      {/* Client Table */}
+      {clients.length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-16">
             <div className="p-4 rounded-full bg-primary/10 mb-4">
@@ -150,79 +108,8 @@ export default function ClientsPage() {
             </Button>
           </CardContent>
         </Card>
-      ) : filteredClients.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <p className="text-muted-foreground">No clients found matching "{searchQuery}"</p>
-          </CardContent>
-        </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredClients.map((client) => (
-            <Card
-              key={client.team.id}
-              className="hover:shadow-lg transition-shadow cursor-pointer"
-              onClick={() => router.push(`/dashboard?team=${client.team.id}`)}
-            >
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-primary/10">
-                      <Building2 className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg">
-                        {client.team.clientCompanyName || client.team.name}
-                      </CardTitle>
-                      {client.team.industry && (
-                        <Badge variant="secondary" className="mt-1">
-                          {client.team.industry}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {client.team.description && (
-                  <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
-                    {client.team.description}
-                  </p>
-                )}
-
-                {client.profile?.contentPillars && client.profile.contentPillars.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-xs font-medium text-muted-foreground">Content Pillars</p>
-                    <div className="flex flex-wrap gap-1">
-                      {client.profile.contentPillars.slice(0, 3).map((pillar, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
-                          {pillar}
-                        </Badge>
-                      ))}
-                      {client.profile.contentPillars.length > 3 && (
-                        <Badge variant="outline" className="text-xs">
-                          +{client.profile.contentPillars.length - 3} more
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {client.team.contactEmail && (
-                  <div className="mt-4 pt-4 border-t">
-                    <p className="text-xs text-muted-foreground">{client.team.contactEmail}</p>
-                  </div>
-                )}
-
-                <div className="mt-4 pt-4 border-t">
-                  <p className="text-xs text-muted-foreground">
-                    Created {new Date(client.team.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <ClientsDataTable clients={clients} />
       )}
     </div>
   )

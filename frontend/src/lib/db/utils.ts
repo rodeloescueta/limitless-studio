@@ -1,7 +1,7 @@
-import { eq, and, desc, asc } from 'drizzle-orm'
+import { eq, and, desc, asc, sql } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/pg-core'
 import { db } from './index'
-import { users, teams, teamMembers, stages, contentCards, type User, type Team, type Stage, type ContentCard } from './schema'
+import { users, teams, teamMembers, stages, contentCards, cardChecklistItems, type User, type Team, type Stage, type ContentCard } from './schema'
 import bcrypt from 'bcrypt'
 
 // User utilities
@@ -134,6 +134,7 @@ export async function getTeamCards(teamId: string): Promise<(ContentCard & {
   // Create aliases for users table to avoid conflict
   const assignedUser = alias(users, 'assignedUser')
   const createdUser = alias(users, 'createdUser')
+  const clientTeam = alias(teams, 'clientTeam')
 
   const result = await db
     .select({
@@ -145,10 +146,15 @@ export async function getTeamCards(teamId: string): Promise<(ContentCard & {
       description: contentCards.description,
       content: contentCards.content,
       contentType: contentCards.contentType,
+      contentFormat: contentCards.contentFormat,
       priority: contentCards.priority,
+      status: contentCards.status,
+      clientId: contentCards.clientId,
       assignedToId: contentCards.assignedTo,
       createdById: contentCards.createdBy,
       dueDate: contentCards.dueDate,
+      dueWindowStart: contentCards.dueWindowStart,
+      dueWindowEnd: contentCards.dueWindowEnd,
       position: contentCards.position,
       tags: contentCards.tags,
       metadata: contentCards.metadata,
@@ -158,11 +164,25 @@ export async function getTeamCards(teamId: string): Promise<(ContentCard & {
       assignedToUser: assignedUser,
       createdByUser: createdUser,
       stage: stages,
+      clientTeam: clientTeam,
+      // Checklist counts
+      checklistTotal: sql<number>`(
+        SELECT COUNT(*)
+        FROM ${cardChecklistItems}
+        WHERE ${cardChecklistItems.cardId} = ${contentCards.id}
+      )`.as('checklistTotal'),
+      checklistCompleted: sql<number>`(
+        SELECT COUNT(*)
+        FROM ${cardChecklistItems}
+        WHERE ${cardChecklistItems.cardId} = ${contentCards.id}
+        AND ${cardChecklistItems.isCompleted} = true
+      )`.as('checklistCompleted'),
     })
     .from(contentCards)
     .leftJoin(assignedUser, eq(contentCards.assignedTo, assignedUser.id))
     .innerJoin(createdUser, eq(contentCards.createdBy, createdUser.id))
     .innerJoin(stages, eq(contentCards.stageId, stages.id))
+    .leftJoin(clientTeam, eq(contentCards.clientId, clientTeam.id))
     .where(eq(contentCards.teamId, teamId))
     .orderBy(asc(stages.position), asc(contentCards.position))
 
@@ -174,8 +194,18 @@ export async function getTeamCards(teamId: string): Promise<(ContentCard & {
     description: row.description,
     content: row.content,
     contentType: row.contentType,
+    contentFormat: row.contentFormat,
     priority: row.priority,
+    status: row.status,
+    clientId: row.clientId,
+    client: row.clientTeam ? {
+      id: row.clientTeam.id,
+      name: row.clientTeam.name,
+      clientCompanyName: row.clientTeam.clientCompanyName,
+    } : undefined,
     dueDate: row.dueDate,
+    dueWindowStart: row.dueWindowStart,
+    dueWindowEnd: row.dueWindowEnd,
     position: row.position,
     tags: row.tags,
     metadata: row.metadata,
@@ -186,6 +216,8 @@ export async function getTeamCards(teamId: string): Promise<(ContentCard & {
     stage: row.stage,
     commentsCount: 0, // TODO: Implement comments
     attachmentsCount: 0, // TODO: Implement attachments
+    checklistTotal: Number(row.checklistTotal),
+    checklistCompleted: Number(row.checklistCompleted),
   }))
 }
 
@@ -197,6 +229,7 @@ export async function getContentCard(cardId: string): Promise<(ContentCard & {
   // Create aliases for users table to avoid conflict
   const assignedUser = alias(users, 'assignedUser')
   const createdUser = alias(users, 'createdUser')
+  const clientTeam = alias(teams, 'clientTeam')
 
   const result = await db
     .select({
@@ -208,10 +241,15 @@ export async function getContentCard(cardId: string): Promise<(ContentCard & {
       description: contentCards.description,
       content: contentCards.content,
       contentType: contentCards.contentType,
+      contentFormat: contentCards.contentFormat,
       priority: contentCards.priority,
+      status: contentCards.status,
+      clientId: contentCards.clientId,
       assignedTo: contentCards.assignedTo,
       createdBy: contentCards.createdBy,
       dueDate: contentCards.dueDate,
+      dueWindowStart: contentCards.dueWindowStart,
+      dueWindowEnd: contentCards.dueWindowEnd,
       position: contentCards.position,
       tags: contentCards.tags,
       metadata: contentCards.metadata,
@@ -221,11 +259,25 @@ export async function getContentCard(cardId: string): Promise<(ContentCard & {
       assignedToUser: assignedUser,
       createdByUser: createdUser,
       stage: stages,
+      clientTeam: clientTeam,
+      // Checklist counts
+      checklistTotal: sql<number>`(
+        SELECT COUNT(*)
+        FROM ${cardChecklistItems}
+        WHERE ${cardChecklistItems.cardId} = ${contentCards.id}
+      )`.as('checklistTotal'),
+      checklistCompleted: sql<number>`(
+        SELECT COUNT(*)
+        FROM ${cardChecklistItems}
+        WHERE ${cardChecklistItems.cardId} = ${contentCards.id}
+        AND ${cardChecklistItems.isCompleted} = true
+      )`.as('checklistCompleted'),
     })
     .from(contentCards)
     .leftJoin(assignedUser, eq(contentCards.assignedTo, assignedUser.id))
     .innerJoin(createdUser, eq(contentCards.createdBy, createdUser.id))
     .innerJoin(stages, eq(contentCards.stageId, stages.id))
+    .leftJoin(clientTeam, eq(contentCards.clientId, clientTeam.id))
     .where(eq(contentCards.id, cardId))
     .limit(1)
 
@@ -240,8 +292,18 @@ export async function getContentCard(cardId: string): Promise<(ContentCard & {
     description: row.description,
     content: row.content,
     contentType: row.contentType,
+    contentFormat: row.contentFormat,
     priority: row.priority,
+    status: row.status,
+    clientId: row.clientId,
+    client: row.clientTeam ? {
+      id: row.clientTeam.id,
+      name: row.clientTeam.name,
+      clientCompanyName: row.clientTeam.clientCompanyName,
+    } : undefined,
     dueDate: row.dueDate,
+    dueWindowStart: row.dueWindowStart,
+    dueWindowEnd: row.dueWindowEnd,
     position: row.position,
     tags: row.tags,
     metadata: row.metadata,
@@ -252,6 +314,8 @@ export async function getContentCard(cardId: string): Promise<(ContentCard & {
     stage: row.stage,
     commentsCount: 0, // TODO: Implement comments
     attachmentsCount: 0, // TODO: Implement attachments
+    checklistTotal: Number(row.checklistTotal),
+    checklistCompleted: Number(row.checklistCompleted),
   }
 }
 
@@ -262,9 +326,14 @@ export async function createContentCard(data: {
   description?: string
   content?: string
   priority?: 'low' | 'medium' | 'high' | 'urgent'
+  contentFormat?: 'short' | 'long'
+  status?: 'not_started' | 'in_progress' | 'blocked' | 'ready_for_review' | 'completed'
+  clientId?: string
   assignedTo?: string
   createdBy: string
   dueDate?: string
+  dueWindowStart?: string
+  dueWindowEnd?: string
   tags?: string[]
 }): Promise<ContentCard> {
   // Get the next position in the stage
@@ -286,9 +355,14 @@ export async function createContentCard(data: {
       description: data.description,
       content: data.content,
       priority: data.priority || 'medium',
+      contentFormat: data.contentFormat,
+      status: data.status,
+      clientId: data.clientId,
       assignedTo: data.assignedTo,
       createdBy: data.createdBy,
       dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
+      dueWindowStart: data.dueWindowStart ? new Date(data.dueWindowStart) : undefined,
+      dueWindowEnd: data.dueWindowEnd ? new Date(data.dueWindowEnd) : undefined,
       position,
       tags: data.tags ? JSON.stringify(data.tags) : undefined,
     })

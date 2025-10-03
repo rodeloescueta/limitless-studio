@@ -4,6 +4,8 @@ import { relations } from 'drizzle-orm'
 // Enums
 export const userRoleEnum = pgEnum('user_role', ['admin', 'member', 'client', 'strategist', 'scriptwriter', 'editor', 'coordinator'])
 export const contentPriorityEnum = pgEnum('content_priority', ['low', 'medium', 'high', 'urgent'])
+export const contentFormatEnum = pgEnum('content_format', ['short', 'long'])
+export const cardStatusEnum = pgEnum('card_status', ['not_started', 'in_progress', 'blocked', 'ready_for_review', 'completed'])
 export const alertTypeEnum = pgEnum('alert_type', ['stage_overdue', 'deadline_missed', 'no_response', 'manual'])
 export const alertSeverityEnum = pgEnum('alert_severity', ['low', 'medium', 'high', 'critical'])
 export const alertStatusEnum = pgEnum('alert_status', ['open', 'acknowledged', 'resolved', 'escalated', 'dismissed'])
@@ -78,10 +80,15 @@ export const contentCards = pgTable('content_cards', {
   description: text('description'),
   content: text('content'), // Rich content/script
   contentType: varchar('content_type', { length: 50 }),
+  contentFormat: contentFormatEnum('content_format').default('short'),
   priority: contentPriorityEnum('priority').default('medium'),
+  status: cardStatusEnum('status').default('not_started'),
+  clientId: uuid('client_id').references(() => teams.id),
   assignedTo: uuid('assigned_to').references(() => users.id),
   createdBy: uuid('created_by').references(() => users.id).notNull(),
   dueDate: timestamp('due_date'),
+  dueWindowStart: timestamp('due_window_start'),
+  dueWindowEnd: timestamp('due_window_end'),
   position: integer('position'),
   tags: text('tags'), // JSON array as text
   metadata: text('metadata'), // JSON metadata as text
@@ -90,6 +97,7 @@ export const contentCards = pgTable('content_cards', {
 }, (table) => ({
   teamIdx: index('content_cards_team_idx').on(table.teamId),
   stageIdx: index('content_cards_stage_idx').on(table.stageId),
+  clientIdx: index('content_cards_client_idx').on(table.clientId),
   assignedToIdx: index('content_cards_assigned_to_idx').on(table.assignedTo),
   createdByIdx: index('content_cards_created_by_idx').on(table.createdBy),
   stagePositionIdx: index('content_cards_stage_position_idx').on(table.stageId, table.position),
@@ -329,6 +337,41 @@ export const auditLogs = pgTable('audit_logs', {
   createdAtIdx: index('audit_logs_created_at_idx').on(table.createdAt),
 }))
 
+// Checklist templates (stage-specific deliverables)
+export const checklistTemplates = pgTable('checklist_templates', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  stageId: uuid('stage_id').references(() => stages.id, { onDelete: 'cascade' }).notNull(),
+  title: varchar('title', { length: 200 }).notNull(),
+  description: text('description'),
+  position: integer('position').notNull().default(0),
+  isRequired: boolean('is_required').default(false),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  stageIdx: index('checklist_templates_stage_idx').on(table.stageId),
+  stagePositionIdx: index('checklist_templates_stage_position_idx').on(table.stageId, table.position),
+}))
+
+// Card checklist items (actual checklist for each card)
+export const cardChecklistItems = pgTable('card_checklist_items', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  cardId: uuid('card_id').references(() => contentCards.id, { onDelete: 'cascade' }).notNull(),
+  templateId: uuid('template_id').references(() => checklistTemplates.id, { onDelete: 'set null' }),
+  title: varchar('title', { length: 200 }).notNull(),
+  description: text('description'),
+  position: integer('position').notNull().default(0),
+  isCompleted: boolean('is_completed').default(false),
+  completedAt: timestamp('completed_at'),
+  completedBy: uuid('completed_by').references(() => users.id, { onDelete: 'set null' }),
+  isCustom: boolean('is_custom').default(false), // true if added by user, false if from template
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  cardIdx: index('card_checklist_items_card_idx').on(table.cardId),
+  templateIdx: index('card_checklist_items_template_idx').on(table.templateId),
+  cardPositionIdx: index('card_checklist_items_card_position_idx').on(table.cardId, table.position),
+}))
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   teamMemberships: many(teamMembers),
@@ -385,6 +428,11 @@ export const contentCardsRelations = relations(contentCards, ({ one, many }) => 
     fields: [contentCards.stageId],
     references: [stages.id],
   }),
+  client: one(teams, {
+    fields: [contentCards.clientId],
+    references: [teams.id],
+    relationName: 'clientCards',
+  }),
   assignedTo: one(users, {
     fields: [contentCards.assignedTo],
     references: [users.id],
@@ -399,6 +447,7 @@ export const contentCardsRelations = relations(contentCards, ({ one, many }) => 
   attachments: many(attachments),
   assignments: many(cardAssignments),
   teamShares: many(cardTeamShares),
+  checklistItems: many(cardChecklistItems),
 }))
 
 export const commentsRelations = relations(comments, ({ one, many }) => ({
@@ -545,6 +594,29 @@ export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
   }),
 }))
 
+export const checklistTemplatesRelations = relations(checklistTemplates, ({ one, many }) => ({
+  stage: one(stages, {
+    fields: [checklistTemplates.stageId],
+    references: [stages.id],
+  }),
+  checklistItems: many(cardChecklistItems),
+}))
+
+export const cardChecklistItemsRelations = relations(cardChecklistItems, ({ one }) => ({
+  card: one(contentCards, {
+    fields: [cardChecklistItems.cardId],
+    references: [contentCards.id],
+  }),
+  template: one(checklistTemplates, {
+    fields: [cardChecklistItems.templateId],
+    references: [checklistTemplates.id],
+  }),
+  completedByUser: one(users, {
+    fields: [cardChecklistItems.completedBy],
+    references: [users.id],
+  }),
+}))
+
 // Type exports
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
@@ -587,6 +659,10 @@ export type NewAlert = typeof alerts.$inferInsert
 export type StageTimeConfig = typeof stageTimeConfigs.$inferSelect
 export type NewStageTimeConfig = typeof stageTimeConfigs.$inferInsert
 export type AuditLog = typeof auditLogs.$inferSelect
+export type ChecklistTemplate = typeof checklistTemplates.$inferSelect
+export type NewChecklistTemplate = typeof checklistTemplates.$inferInsert
+export type CardChecklistItem = typeof cardChecklistItems.$inferSelect
+export type NewCardChecklistItem = typeof cardChecklistItems.$inferInsert
 export type NewAuditLog = typeof auditLogs.$inferInsert
 
 // Extended type for audit log with user details

@@ -81,6 +81,9 @@ class ApiClient {
 
     getMembers: (teamId: string) =>
       this.request<TeamMember[]>(`/teams/${teamId}/members`),
+
+    getClients: () =>
+      this.request<ClientTeam[]>('/teams/clients'),
   }
 
   // Cards API
@@ -123,6 +126,27 @@ class ApiClient {
       this.request<Assignment>(`/cards/${cardId}/assignments`, {
         method: 'POST',
         body: JSON.stringify(data),
+      }),
+
+    // Checklist
+    getChecklist: (cardId: string) =>
+      this.request<ChecklistItem[]>(`/cards/${cardId}/checklist`),
+
+    createChecklistItem: (cardId: string, data: CreateChecklistItemData) =>
+      this.request<ChecklistItem>(`/cards/${cardId}/checklist`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+
+    toggleChecklistItem: (cardId: string, itemId: string, isCompleted: boolean) =>
+      this.request<ChecklistItem>(`/cards/${cardId}/checklist/${itemId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ isCompleted }),
+      }),
+
+    deleteChecklistItem: (cardId: string, itemId: string) =>
+      this.request<{ success: boolean }>(`/cards/${cardId}/checklist/${itemId}`, {
+        method: 'DELETE',
       }),
   }
 
@@ -219,14 +243,22 @@ export interface ContentCard {
   content?: string
   stageId: string
   teamId: string
+  clientId?: string
+  client?: { id: string; name: string; clientCompanyName?: string }
   assignedTo?: User
   createdBy: User
   priority: 'low' | 'medium' | 'high' | 'urgent'
+  contentFormat?: 'short' | 'long'
+  status?: 'not_started' | 'in_progress' | 'blocked' | 'ready_for_review' | 'completed'
   dueDate?: string
+  dueWindowStart?: string
+  dueWindowEnd?: string
   tags?: string[]
   position: number
   commentsCount: number
   attachmentsCount: number
+  checklistTotal: number
+  checklistCompleted: number
   createdAt: string
   updatedAt: string
 }
@@ -245,9 +277,14 @@ export interface CreateCardData {
   description?: string
   content?: string
   stageId: string
+  clientId?: string
   assignedTo?: string
   priority?: 'low' | 'medium' | 'high' | 'urgent'
+  contentFormat?: 'short' | 'long'
+  status?: 'not_started' | 'in_progress' | 'blocked' | 'ready_for_review' | 'completed'
   dueDate?: string
+  dueWindowStart?: string
+  dueWindowEnd?: string
   tags?: string[]
 }
 
@@ -368,6 +405,41 @@ export interface NotificationResponse {
   notifications: Notification[]
   unreadCount: number
   hasMore: boolean
+}
+
+export interface ChecklistItem {
+  id: string
+  cardId: string
+  templateId?: string
+  title: string
+  description?: string
+  position: number
+  isCompleted: boolean
+  completedAt?: string
+  isCustom: boolean
+  createdAt: string
+  updatedAt: string
+  completedBy?: {
+    id: string
+    firstName: string
+    lastName: string
+    email: string
+    avatar?: string
+  }
+}
+
+export interface CreateChecklistItemData {
+  title: string
+  description?: string
+  position?: number
+}
+
+export interface ClientTeam {
+  id: string
+  name: string
+  clientCompanyName?: string
+  industry?: string
+  contactEmail?: string
 }
 
 export { ApiError }

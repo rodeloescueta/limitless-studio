@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { teams, clientProfiles, stages } from '@/lib/db/schema'
+import { teams, clientProfiles } from '@/lib/db/schema'
+import { createDefaultStages } from '@/lib/db/utils'
 import { eq } from 'drizzle-orm'
 
 // GET /api/clients - List all clients (teams where isClient = true)
@@ -92,24 +93,8 @@ export async function POST(request: NextRequest) {
       })
       .returning()
 
-    // Create default REACH stages for the team
-    const stageNames = [
-      { name: 'Research', position: 0, color: '#3B82F6' },
-      { name: 'Envision', position: 1, color: '#8B5CF6' },
-      { name: 'Assemble', position: 2, color: '#EC4899' },
-      { name: 'Connect', position: 3, color: '#10B981' },
-      { name: 'Hone', position: 4, color: '#F59E0B' },
-    ]
-
-    await db.insert(stages).values(
-      stageNames.map(stage => ({
-        teamId: newTeam.id,
-        name: stage.name,
-        position: stage.position,
-        color: stage.color,
-        description: `${stage.name} stage`,
-      }))
-    )
+    // Create default REACH stages for the client team
+    await createDefaultStages(newTeam.id)
 
     // Create client profile if any profile data provided
     let profile = null

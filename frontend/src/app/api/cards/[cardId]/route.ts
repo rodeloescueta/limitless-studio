@@ -15,8 +15,13 @@ const updateCardSchema = z.object({
   description: z.string().optional(),
   content: z.string().optional(),
   priority: z.enum(['low', 'medium', 'high', 'urgent']).optional(),
+  contentFormat: z.enum(['short', 'long']).optional(),
+  status: z.enum(['not_started', 'in_progress', 'blocked', 'ready_for_review', 'completed']).optional(),
+  clientId: z.string().uuid().optional().nullable(),
   assignedTo: z.string().uuid().optional().nullable(),
   dueDate: z.string().datetime().optional().nullable(),
+  dueWindowStart: z.string().datetime().optional().nullable(),
+  dueWindowEnd: z.string().datetime().optional().nullable(),
   tags: z.array(z.string()).optional(),
   stageId: z.string().uuid().optional(),
 })

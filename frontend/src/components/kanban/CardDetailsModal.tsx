@@ -47,10 +47,12 @@ import { useCardDetails, useUpdateCard, useDeleteCard } from '@/lib/hooks/useCar
 import { useCardComments } from '@/lib/hooks/useComments'
 import { useCardAttachments } from '@/lib/hooks/useAttachments'
 import { useCardAssignments } from '@/lib/hooks/useAssignments'
+import { useCardChecklist } from '@/lib/hooks/useChecklist'
 import { CommentsPanel } from '@/components/comments/CommentsPanel'
 import { AttachmentsPanel } from '@/components/attachments/AttachmentsPanel'
 import { AssignmentPanel } from '@/components/assignments/AssignmentPanel'
 import { CardHistoryPanel } from '@/components/audit/CardHistoryPanel'
+import { ChecklistPanel } from '@/components/checklist/ChecklistPanel'
 import { RoleGate, EditAccess, usePermissions } from '@/components/auth/RoleGate'
 import { format, formatDistanceToNow } from 'date-fns'
 import {
@@ -68,6 +70,7 @@ import {
   ArrowDown,
   X,
   AlertCircle,
+  CheckSquare,
 } from 'lucide-react'
 
 const updateCardSchema = z.object({
@@ -95,6 +98,7 @@ export function CardDetailsModal({ cardId, isOpen, onClose }: CardDetailsModalPr
   const { data: comments = [] } = useCardComments(cardId || '')
   const { data: attachments = [] } = useCardAttachments(cardId || '')
   const { data: assignments = [] } = useCardAssignments(cardId || '')
+  const { data: checklistItems = [] } = useCardChecklist(cardId || '')
   const updateCard = useUpdateCard()
   const deleteCard = useDeleteCard()
   const permissions = usePermissions()
@@ -321,7 +325,7 @@ export function CardDetailsModal({ cardId, isOpen, onClose }: CardDetailsModalPr
 
           {/* Enhanced Tabs with Icons and Badges */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-hidden flex flex-col px-4 sm:px-0">
-            <TabsList className="grid w-full grid-cols-6 h-auto p-0.5 sm:p-1 gap-0.5 sm:gap-1">
+            <TabsList className="grid w-full grid-cols-7 h-auto p-0.5 sm:p-1 gap-0.5 sm:gap-1">
               <TabsTrigger value="overview" className="flex items-center justify-center gap-1 sm:gap-2 py-2 sm:py-2.5 px-1 sm:px-3" aria-label="Overview tab">
                 <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
                 <span className="hidden md:inline text-xs sm:text-sm">Overview</span>
@@ -329,6 +333,18 @@ export function CardDetailsModal({ cardId, isOpen, onClose }: CardDetailsModalPr
               <TabsTrigger value="content" className="flex items-center justify-center gap-1 sm:gap-2 py-2 sm:py-2.5 px-1 sm:px-3" aria-label="Content tab">
                 <Edit3 className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
                 <span className="hidden md:inline text-xs sm:text-sm">Content</span>
+              </TabsTrigger>
+              <TabsTrigger value="checklist" className="flex items-center justify-center gap-1 sm:gap-2 py-2 sm:py-2.5 px-1 sm:px-3 relative" aria-label="Checklist tab">
+                <CheckSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                <span className="hidden md:inline text-xs sm:text-sm">Checklist</span>
+                {checklistItems.length > 0 && (
+                  <Badge variant="secondary" className="hidden sm:flex ml-0.5 h-4 sm:h-5 min-w-4 sm:min-w-5 px-1 sm:px-1.5 text-[10px] sm:text-xs">
+                    {checklistItems.filter(item => item.isCompleted).length}/{checklistItems.length}
+                  </Badge>
+                )}
+                {checklistItems.length > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 sm:hidden flex h-2 w-2 rounded-full bg-primary" />
+                )}
               </TabsTrigger>
               <TabsTrigger value="assignments" className="flex items-center justify-center gap-1 sm:gap-2 py-2 sm:py-2.5 px-1 sm:px-3 relative" aria-label="Assignments tab">
                 <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
@@ -550,7 +566,7 @@ export function CardDetailsModal({ cardId, isOpen, onClose }: CardDetailsModalPr
                           <Avatar className="h-9 w-9 border-2 border-background shadow-sm">
                             <AvatarImage src={card.createdBy.avatar} />
                             <AvatarFallback className="text-xs font-semibold">
-                              {card.createdBy.firstName[0]}{card.createdBy.lastName[0]}
+                              {card.createdBy.firstName?.[0] || ''}{card.createdBy.lastName?.[0] || ''}
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex-1 min-w-0">
@@ -632,6 +648,12 @@ export function CardDetailsModal({ cardId, isOpen, onClose }: CardDetailsModalPr
                   <div className="bg-background rounded-xl p-5 border shadow-sm space-y-3">
                     <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Activity</h3>
                     <div className="space-y-2.5 text-xs">
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Checklist</span>
+                        <Badge variant="secondary" className="h-6 min-w-6 px-2">
+                          {checklistItems.filter(item => item.isCompleted).length}/{checklistItems.length}
+                        </Badge>
+                      </div>
                       <div className="flex items-center justify-between">
                         <span className="text-muted-foreground">Comments</span>
                         <Badge variant="secondary" className="h-6 min-w-6 px-2">
@@ -721,6 +743,13 @@ export function CardDetailsModal({ cardId, isOpen, onClose }: CardDetailsModalPr
                   </div>
                 </Form>
               </EditAccess>
+            </TabsContent>
+
+            <TabsContent value="checklist" className="h-full">
+              <ChecklistPanel
+                cardId={cardId}
+                readonly={!permissions.canEdit(card.stage?.name || '')}
+              />
             </TabsContent>
 
             <TabsContent value="assignments" className="h-full">

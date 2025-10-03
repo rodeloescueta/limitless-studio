@@ -10,9 +10,14 @@ const createCardSchema = z.object({
   description: z.string().optional(),
   content: z.string().optional(),
   stageId: z.string().uuid(),
+  clientId: z.string().uuid().optional(),
   assignedTo: z.string().uuid().optional(),
   priority: z.enum(['low', 'medium', 'high', 'urgent']).default('medium'),
+  contentFormat: z.enum(['short', 'long']).default('short'),
+  status: z.enum(['not_started', 'in_progress', 'blocked', 'ready_for_review', 'completed']).default('not_started'),
   dueDate: z.string().datetime().optional(),
+  dueWindowStart: z.string().datetime().optional(),
+  dueWindowEnd: z.string().datetime().optional(),
   tags: z.array(z.string()).optional(),
 })
 

@@ -8,7 +8,8 @@ import {
   CalendarIcon,
   MessageSquareIcon,
   PaperclipIcon,
-  GripVerticalIcon
+  GripVerticalIcon,
+  CheckSquare
 } from 'lucide-react'
 import { format } from 'date-fns'
 import type { ContentCard as ContentCardType } from '@/lib/api-client'
@@ -55,9 +56,16 @@ export function ContentCard({ card, dragHandleProps, isDragging, onClick, stageC
     >
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
-          <h4 className="font-medium text-sm text-card-foreground line-clamp-2 flex-1 mr-2">
-            {card.title}
-          </h4>
+          <div className="flex-1 mr-2">
+            <h4 className="font-medium text-sm text-card-foreground line-clamp-2">
+              {card.title}
+            </h4>
+            {card.client && (
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {card.client.clientCompanyName || card.client.name}
+              </p>
+            )}
+          </div>
           <div className="flex items-center gap-1">
             <Badge
               variant="secondary"
@@ -81,6 +89,28 @@ export function ContentCard({ card, dragHandleProps, isDragging, onClick, stageC
             {card.description}
           </p>
         )}
+
+        {/* Format and Status badges */}
+        <div className="flex gap-1 mt-2">
+          {card.contentFormat && (
+            <Badge variant="outline" className="text-xs">
+              {card.contentFormat === 'short' ? 'Short' : 'Long'}
+            </Badge>
+          )}
+          {card.status && card.status !== 'not_started' && (
+            <Badge
+              variant="outline"
+              className={`text-xs ${
+                card.status === 'completed' ? 'bg-green-50 text-green-700' :
+                card.status === 'in_progress' ? 'bg-blue-50 text-blue-700' :
+                card.status === 'blocked' ? 'bg-red-50 text-red-700' :
+                'bg-yellow-50 text-yellow-700'
+              }`}
+            >
+              {card.status.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+            </Badge>
+          )}
+        </div>
       </CardHeader>
 
       <CardContent className="pt-0">
@@ -100,6 +130,33 @@ export function ContentCard({ card, dragHandleProps, isDragging, onClick, stageC
           </div>
         )}
 
+        {/* Checklist Progress Bar */}
+        {card.checklistTotal > 0 && (
+          <div className="mb-3">
+            <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
+              <div className="flex items-center gap-1">
+                <CheckSquare className="h-3 w-3" />
+                <span>Checklist</span>
+              </div>
+              <span className="font-medium">
+                {card.checklistCompleted}/{card.checklistTotal}
+              </span>
+            </div>
+            <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+              <div
+                className={`h-full transition-all duration-300 ${
+                  card.checklistCompleted === card.checklistTotal
+                    ? 'bg-green-500'
+                    : 'bg-blue-500'
+                }`}
+                style={{
+                  width: `${(card.checklistCompleted / card.checklistTotal) * 100}%`
+                }}
+              />
+            </div>
+          </div>
+        )}
+
         {/* Card Footer */}
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <div className="flex items-center gap-2">
@@ -108,16 +165,26 @@ export function ContentCard({ card, dragHandleProps, isDragging, onClick, stageC
                 <Avatar className="h-4 w-4">
                   <AvatarImage src={card.assignedTo.avatar} />
                   <AvatarFallback className="text-xs">
-                    {card.assignedTo.firstName[0]}{card.assignedTo.lastName[0]}
+                    {card.assignedTo.firstName?.[0] || ''}{card.assignedTo.lastName?.[0] || ''}
                   </AvatarFallback>
                 </Avatar>
               </div>
             )}
 
-            {card.dueDate && (
+            {(card.dueWindowStart || card.dueWindowEnd || card.dueDate) && (
               <div className="flex items-center gap-1">
                 <CalendarIcon className="h-3 w-3" />
-                <span>{format(new Date(card.dueDate), 'MMM d')}</span>
+                <span>
+                  {card.dueWindowStart && card.dueWindowEnd ? (
+                    `${format(new Date(card.dueWindowStart), 'MMM d')} - ${format(new Date(card.dueWindowEnd), 'MMM d')}`
+                  ) : card.dueWindowEnd ? (
+                    `Due ${format(new Date(card.dueWindowEnd), 'MMM d')}`
+                  ) : card.dueWindowStart ? (
+                    `From ${format(new Date(card.dueWindowStart), 'MMM d')}`
+                  ) : card.dueDate ? (
+                    format(new Date(card.dueDate), 'MMM d')
+                  ) : null}
+                </span>
               </div>
             )}
           </div>

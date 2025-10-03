@@ -4,8 +4,8 @@ import { authOptions } from '@/lib/auth'
 import { getContentCard, verifyTeamAccess, moveContentCard } from '@/lib/db/utils'
 import { AuditLogService } from '@/lib/services/audit-log.service'
 import { db } from '@/lib/db'
-import { stages } from '@/lib/db/schema'
-import { eq } from 'drizzle-orm'
+import { stages, checklistTemplates, cardChecklistItems } from '@/lib/db/schema'
+import { eq, asc, and } from 'drizzle-orm'
 import { z } from 'zod'
 
 const moveCardSchema = z.object({
@@ -59,6 +59,38 @@ export async function PUT(
       .limit(1)
 
     const movedCard = await moveContentCard(cardId, stageId, position)
+
+    // Auto-populate checklist when stage changes
+    if (card.stageId !== stageId && newStage) {
+      // Delete old template-based checklist items (keep custom items)
+      await db
+        .delete(cardChecklistItems)
+        .where(
+          and(
+            eq(cardChecklistItems.cardId, cardId),
+            eq(cardChecklistItems.isCustom, false)
+          )
+        )
+
+      // Get templates for the new stage
+      const templates = await db
+        .select()
+        .from(checklistTemplates)
+        .where(eq(checklistTemplates.stageId, newStage.id))
+        .orderBy(asc(checklistTemplates.position))
+
+      // Create checklist items from templates
+      for (const template of templates) {
+        await db.insert(cardChecklistItems).values({
+          cardId,
+          templateId: template.id,
+          title: template.title,
+          description: template.description,
+          position: template.position,
+          isCustom: false, // Template-based item
+        })
+      }
+    }
 
     // Log card move if stage changed
     if (card.stageId !== stageId && oldStage && newStage) {
