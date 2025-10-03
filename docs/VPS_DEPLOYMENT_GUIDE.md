@@ -1,4 +1,4 @@
-# Content Reach Hub - VPS Deployment Guide
+# Limitless Studio - VPS Deployment Guide
 
 **Version**: 1.0
 **Last Updated**: October 3, 2025
@@ -206,16 +206,16 @@ echo "fs.file-max=100000" | sudo tee -a /etc/sysctl.conf
 
 ```bash
 # Create application directory
-sudo mkdir -p /opt/content-reach-hub
-sudo chown $USER:$USER /opt/content-reach-hub
+sudo mkdir -p /opt/limitless-studio
+sudo chown $USER:$USER /opt/limitless-studio
 
 # Clone repository
 cd /opt
-git clone https://github.com/YOUR_USERNAME/content-reach-hub.git
+git clone https://github.com/rodeloescueta/limitless-studio.git
 # OR if repository is private:
-# git clone https://YOUR_TOKEN@github.com/YOUR_USERNAME/content-reach-hub.git
+# git clone https://YOUR_TOKEN@github.com/rodeloescueta/limitless-studio.git
 
-cd content-reach-hub
+cd limitless-studio
 ```
 
 ### Step 9: Create Production Environment File
@@ -229,11 +229,11 @@ nano .env.production
 
 ```bash
 # ============================================
-# Content Reach Hub - Production Environment
+# Limitless Studio - Production Environment
 # ============================================
 
 # === Database Configuration ===
-POSTGRES_DB=content_reach_hub
+POSTGRES_DB=limitless_studio
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=CHANGE_ME_STRONG_PASSWORD_HERE
 # Generate strong password: openssl rand -base64 32
@@ -247,26 +247,45 @@ NEXTAUTH_URL=http://YOUR_SERVER_IP:3000
 NEXTAUTH_SECRET=CHANGE_ME_RANDOM_SECRET_HERE
 
 # === Database Connection (for Next.js) ===
-DATABASE_URL=postgresql://postgres:CHANGE_ME_STRONG_PASSWORD_HERE@db:5432/content_reach_hub
+DATABASE_URL=postgresql://postgres:CHANGE_ME_STRONG_PASSWORD_HERE@db:5432/limitless_studio
 
 # === Redis Configuration ===
-REDIS_URL=redis://:CHANGE_ME_REDIS_PASSWORD@redis:6379
 REDIS_PASSWORD=CHANGE_ME_REDIS_PASSWORD
+REDIS_URL=redis://:CHANGE_ME_REDIS_PASSWORD@redis:6379
+REDIS_HOST=redis
+REDIS_PORT=6379
 # Generate Redis password: openssl rand -base64 32
+
+# === Queue Configuration ===
+QUEUE_NAME_NOTIFICATIONS=notifications
+QUEUE_NAME_SCHEDULED=scheduled-tasks
+QUEUE_CONCURRENCY=5
 
 # === Slack Integration (Optional) ===
 SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/WEBHOOK/URL
 SLACK_NOTIFICATIONS_ENABLED=false
+SLACK_CHANNEL_GENERAL=#content-team
+SLACK_CHANNEL_ALERTS=#content-alerts
 # Set to true when you have webhook URL
+
+# === Worker Configuration ===
+WORKER_ENABLED=true
+WORKER_CONCURRENCY=3
 
 # === pgAdmin Configuration (Optional) ===
 PGADMIN_DEFAULT_EMAIL=admin@yourdomain.com
 PGADMIN_DEFAULT_PASSWORD=CHANGE_ME_PGADMIN_PASSWORD
 
-# === Feature Flags ===
-ENABLE_ANALYTICS=true
-ENABLE_FILE_UPLOAD=true
-ENABLE_NOTIFICATIONS=true
+# === Security & Performance ===
+# Rate limiting (requests per second)
+RATE_LIMIT_API=30
+RATE_LIMIT_GENERAL=10
+
+# Session settings
+SESSION_MAX_AGE=86400
+
+# CORS origins (comma-separated)
+ALLOWED_ORIGINS=http://YOUR_SERVER_IP:3000
 
 # === Security ===
 # Uncomment for production security enhancements
@@ -323,12 +342,12 @@ docker compose -f docker-compose.prod.yml ps
 
 **Expected Output**:
 ```
-NAME                    STATUS              PORTS
-content-reach-hub-web-1      Up 2 minutes        0.0.0.0:3000->3000/tcp
-content-reach-hub-db-1       Up 2 minutes        127.0.0.1:5432->5432/tcp
-content-reach-hub-redis-1    Up 2 minutes        127.0.0.1:6379->6379/tcp
-content-reach-hub-worker-1   Up 2 minutes
-content-reach-hub-pgadmin-1  Up 2 minutes        127.0.0.1:8080->80/tcp
+NAME                       STATUS              PORTS
+limitless-studio-web-1     Up 2 minutes        0.0.0.0:3000->3000/tcp
+limitless-studio-db-1      Up 2 minutes        127.0.0.1:5432->5432/tcp
+limitless-studio-redis-1   Up 2 minutes        127.0.0.1:6379->6379/tcp
+limitless-studio-worker-1  Up 2 minutes
+limitless-studio-pgadmin-1 Up 2 minutes        127.0.0.1:8080->80/tcp
 ```
 
 **All services should show "Up"**. If any service shows "Restarting" or "Exited", check logs:
@@ -371,7 +390,7 @@ http://YOUR_SERVER_IP:3000
 ```
 
 **You should see**:
-- Login page for Content Reach Hub
+- Login page for Limitless Studio
 - Ability to sign in with test accounts
 
 **Test login**:
@@ -404,16 +423,16 @@ sudo systemctl status nginx
 
 ```bash
 # Create Nginx configuration
-sudo nano /etc/nginx/sites-available/content-reach-hub
+sudo nano /etc/nginx/sites-available/limitless-studio
 ```
 
 **Basic HTTP configuration** (no SSL yet):
 
 ```nginx
-# Content Reach Hub - Nginx Configuration
+# Limitless Studio - Nginx Configuration
 # HTTP only (for testing)
 
-upstream content_reach_hub {
+upstream limitless_studio {
     server localhost:3000;
     keepalive 64;
 }
@@ -432,14 +451,14 @@ server {
     add_header X-XSS-Protection "1; mode=block" always;
 
     # Logging
-    access_log /var/log/nginx/content-reach-hub-access.log;
-    error_log /var/log/nginx/content-reach-hub-error.log;
+    access_log /var/log/nginx/limitless-studio-access.log;
+    error_log /var/log/nginx/limitless-studio-error.log;
 
     # Client body size (for file uploads - 10MB)
     client_max_body_size 10M;
 
     location / {
-        proxy_pass http://content_reach_hub;
+        proxy_pass http://limitless_studio;
         proxy_http_version 1.1;
 
         # Proxy headers
@@ -461,14 +480,14 @@ server {
 
     # Uploads directory (static file serving)
     location /uploads/ {
-        alias /opt/content-reach-hub/frontend/public/uploads/;
+        alias /opt/limitless-studio/frontend/uploads/;
         expires 7d;
         add_header Cache-Control "public, immutable";
     }
 
     # Next.js static files
     location /_next/static/ {
-        proxy_pass http://content_reach_hub;
+        proxy_pass http://limitless_studio;
         expires 365d;
         add_header Cache-Control "public, immutable";
     }
@@ -490,7 +509,7 @@ server {
 
 ```bash
 # Create symbolic link to enable site
-sudo ln -s /etc/nginx/sites-available/content-reach-hub /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/limitless-studio /etc/nginx/sites-enabled/
 
 # Remove default site (optional)
 sudo rm /etc/nginx/sites-enabled/default
@@ -541,12 +560,12 @@ http://YOUR_SERVER_IP
 ```
 
 **You should see**:
-- Content Reach Hub login page (same as before)
+- Limitless Studio login page (same as before)
 - Now accessible on port 80 (standard HTTP)
 
 **Update `.env.production`**:
 ```bash
-nano /opt/content-reach-hub/.env.production
+nano /opt/limitless-studio/.env.production
 ```
 
 **Change**:
@@ -562,7 +581,7 @@ NEXTAUTH_URL=http://YOUR_SERVER_IP
 
 **Restart application**:
 ```bash
-cd /opt/content-reach-hub
+cd /opt/limitless-studio
 docker compose -f docker-compose.prod.yml restart web
 ```
 
@@ -611,12 +630,12 @@ https://YOUR_DOMAIN.com
 **You should see**:
 - 🔒 Padlock icon in browser
 - Valid SSL certificate
-- Content Reach Hub login page loads securely
+- Limitless Studio login page loads securely
 
 ### Step 24: Update Application for HTTPS
 
 ```bash
-nano /opt/content-reach-hub/.env.production
+nano /opt/limitless-studio/.env.production
 ```
 
 **Change**:
@@ -634,7 +653,7 @@ SECURE_COOKIES=true
 
 **Restart application**:
 ```bash
-cd /opt/content-reach-hub
+cd /opt/limitless-studio
 docker compose -f docker-compose.prod.yml restart web
 ```
 
@@ -688,7 +707,7 @@ docker stats
 **Automated update script** (already included):
 
 ```bash
-cd /opt/content-reach-hub
+cd /opt/limitless-studio
 ./deploy.sh
 ```
 
@@ -701,7 +720,7 @@ cd /opt/content-reach-hub
 
 **Manual update process**:
 ```bash
-cd /opt/content-reach-hub
+cd /opt/limitless-studio
 
 # Pull latest code
 git pull origin main
@@ -718,7 +737,7 @@ docker compose -f docker-compose.prod.yml exec web npx drizzle-kit push:pg
 **Automated backup script** (already included):
 
 ```bash
-cd /opt/content-reach-hub
+cd /opt/limitless-studio
 
 # Create backup
 ./backup.sh backup
@@ -733,22 +752,22 @@ cd /opt/content-reach-hub
 **Manual backup**:
 ```bash
 # Create backup directory
-mkdir -p /opt/content-reach-hub/backups
+mkdir -p /opt/limitless-studio/backups
 
 # Backup database
-docker compose -f docker-compose.prod.yml exec -T db pg_dump -U postgres -d content_reach_hub > backups/backup-$(date +%Y%m%d-%H%M%S).sql
+docker compose -f docker-compose.prod.yml exec -T db pg_dump -U postgres -d limitless_studio > backups/backup-$(date +%Y%m%d-%H%M%S).sql
 
 # Backup with compression
-docker compose -f docker-compose.prod.yml exec -T db pg_dump -U postgres -d content_reach_hub | gzip > backups/backup-$(date +%Y%m%d-%H%M%S).sql.gz
+docker compose -f docker-compose.prod.yml exec -T db pg_dump -U postgres -d limitless_studio | gzip > backups/backup-$(date +%Y%m%d-%H%M%S).sql.gz
 ```
 
 **Restore backup**:
 ```bash
 # Restore from backup
-docker compose -f docker-compose.prod.yml exec -T db psql -U postgres -d content_reach_hub < backups/backup-FILENAME.sql
+docker compose -f docker-compose.prod.yml exec -T db psql -U postgres -d limitless_studio < backups/backup-FILENAME.sql
 
 # Restore from compressed backup
-gunzip -c backups/backup-FILENAME.sql.gz | docker compose -f docker-compose.prod.yml exec -T db psql -U postgres -d content_reach_hub
+gunzip -c backups/backup-FILENAME.sql.gz | docker compose -f docker-compose.prod.yml exec -T db psql -U postgres -d limitless_studio
 ```
 
 ### Health Monitoring
@@ -763,7 +782,7 @@ curl http://localhost:3000/health
 
 **Check database connection**:
 ```bash
-docker compose -f docker-compose.prod.yml exec db psql -U postgres -d content_reach_hub -c "SELECT 1;"
+docker compose -f docker-compose.prod.yml exec db psql -U postgres -d limitless_studio -c "SELECT 1;"
 ```
 
 **Check Redis connection**:
@@ -799,10 +818,10 @@ docker system prune -a --volumes
 **View Nginx logs**:
 ```bash
 # Access log
-sudo tail -f /var/log/nginx/content-reach-hub-access.log
+sudo tail -f /var/log/nginx/limitless-studio-access.log
 
 # Error log
-sudo tail -f /var/log/nginx/content-reach-hub-error.log
+sudo tail -f /var/log/nginx/limitless-studio-error.log
 ```
 
 **Rotate logs to prevent disk fill**:
@@ -828,7 +847,7 @@ sudo nano /etc/docker/daemon.json
 **Restart Docker**:
 ```bash
 sudo systemctl restart docker
-cd /opt/content-reach-hub
+cd /opt/limitless-studio
 docker compose -f docker-compose.prod.yml up -d
 ```
 
@@ -884,7 +903,7 @@ docker compose -f docker-compose.prod.yml up -d
 3. **Check Docker networking**:
    ```bash
    docker network ls
-   docker network inspect content-reach-hub_app-network
+   docker network inspect limitless-studio_app-network
    ```
 
 4. **Test from server itself**:
@@ -905,7 +924,7 @@ docker compose -f docker-compose.prod.yml up -d
 
 2. **Test database connection**:
    ```bash
-   docker compose -f docker-compose.prod.yml exec db psql -U postgres -d content_reach_hub -c "SELECT 1;"
+   docker compose -f docker-compose.prod.yml exec db psql -U postgres -d limitless_studio -c "SELECT 1;"
    ```
 
 3. **Verify DATABASE_URL**:
@@ -937,7 +956,7 @@ docker compose -f docker-compose.prod.yml up -d
 
 3. **Check Nginx error logs**:
    ```bash
-   sudo tail -f /var/log/nginx/content-reach-hub-error.log
+   sudo tail -f /var/log/nginx/limitless-studio-error.log
    ```
 
 4. **Restart services**:
@@ -1013,7 +1032,7 @@ docker compose -f docker-compose.prod.yml up -d
 crontab -e
 
 # Add this line (daily backup at 2 AM)
-0 2 * * * cd /opt/content-reach-hub && ./backup.sh backup > /tmp/backup.log 2>&1
+0 2 * * * cd /opt/limitless-studio && ./backup.sh backup > /tmp/backup.log 2>&1
 ```
 
 ### Full System Backup
@@ -1030,13 +1049,13 @@ tar -czvf ~/system-backups/app-$(date +%Y%m%d).tar.gz \
   --exclude='.next' \
   --exclude='postgres_data' \
   --exclude='redis_data' \
-  /opt/content-reach-hub
+  /opt/limitless-studio
 
 # Backup database
-docker compose -f docker-compose.prod.yml exec -T db pg_dump -U postgres -d content_reach_hub | gzip > ~/system-backups/db-$(date +%Y%m%d).sql.gz
+docker compose -f docker-compose.prod.yml exec -T db pg_dump -U postgres -d limitless_studio | gzip > ~/system-backups/db-$(date +%Y%m%d).sql.gz
 
 # Backup environment files
-cp /opt/content-reach-hub/.env.production ~/system-backups/env-$(date +%Y%m%d).bak
+cp /opt/limitless-studio/.env.production ~/system-backups/env-$(date +%Y%m%d).bak
 ```
 
 ### Disaster Recovery
@@ -1048,16 +1067,16 @@ cp /opt/content-reach-hub/.env.production ~/system-backups/env-$(date +%Y%m%d).b
 3. **Clone repository** (Step 8)
 4. **Restore environment file**:
    ```bash
-   cp ~/system-backups/env-LATEST.bak /opt/content-reach-hub/.env.production
+   cp ~/system-backups/env-LATEST.bak /opt/limitless-studio/.env.production
    ```
 5. **Start services**:
    ```bash
-   cd /opt/content-reach-hub
+   cd /opt/limitless-studio
    docker compose -f docker-compose.prod.yml up -d
    ```
 6. **Restore database**:
    ```bash
-   gunzip -c ~/system-backups/db-LATEST.sql.gz | docker compose -f docker-compose.prod.yml exec -T db psql -U postgres -d content_reach_hub
+   gunzip -c ~/system-backups/db-LATEST.sql.gz | docker compose -f docker-compose.prod.yml exec -T db psql -U postgres -d limitless_studio
    ```
 7. **Verify application**:
    ```bash
@@ -1103,7 +1122,7 @@ cp /opt/content-reach-hub/.env.production ~/system-backups/env-$(date +%Y%m%d).b
 **Edit PostgreSQL configuration** (for larger deployments):
 
 ```bash
-docker compose -f docker-compose.prod.yml exec db psql -U postgres -d content_reach_hub
+docker compose -f docker-compose.prod.yml exec db psql -U postgres -d limitless_studio
 
 # Inside PostgreSQL shell:
 ALTER SYSTEM SET max_connections = 200;

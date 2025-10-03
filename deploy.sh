@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ###############################################################################
-# Content Reach Hub - Production Deployment Script
+# Limitless Studio - Production Deployment Script
 #
 # This script handles deployment on VPS by:
 # 1. Pulling latest code from GitHub
@@ -21,8 +21,8 @@ NC='\033[0m' # No Color
 
 # Configuration
 REPO_URL="https://github.com/rodeloescueta/limitless-studio.git"
-APP_DIR="/opt/content-reach-hub"
-BACKUP_DIR="/opt/content-reach-hub/backups"
+APP_DIR="/opt/limitless-studio"
+BACKUP_DIR="/opt/limitless-studio/backups"
 COMPOSE_FILE="docker-compose.prod.yml"
 ENV_FILE=".env.production"
 
@@ -72,7 +72,7 @@ backup_database() {
     # Backup using docker exec
     docker compose -f "$COMPOSE_FILE" exec -T db pg_dump \
         -U "${POSTGRES_USER:-postgres}" \
-        -d "${POSTGRES_DB:-content_reach_hub}" \
+        -d "${POSTGRES_DB:-limitless_studio}" \
         > "$BACKUP_FILE" 2>/dev/null || {
             log_warn "Database backup failed (database might not be running yet)"
             return 0
@@ -122,9 +122,9 @@ run_migrations() {
     # Wait for database to be ready
     sleep 5
 
-    # Run migrations (adjust this based on your migration setup)
-    docker compose -f "$COMPOSE_FILE" exec -T web npm run db:migrate || {
-        log_warn "Migration command not found or failed"
+    # Run migrations using Drizzle
+    docker compose -f "$COMPOSE_FILE" exec -T web npx drizzle-kit push:pg --force || {
+        log_warn "Migration command failed - check database connection"
     }
 
     log_info "Migrations completed"

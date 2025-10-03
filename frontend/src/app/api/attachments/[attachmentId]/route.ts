@@ -44,9 +44,9 @@ export async function GET(
     }
 
     // Check if user is a team member
-    const isTeamMember = attachment.contentCard.team.members.some(
+    const isTeamMember = attachment.contentCard?.team?.members?.some(
       member => member.userId === session.user.id
-    )
+    ) || false
     if (!isTeamMember) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }

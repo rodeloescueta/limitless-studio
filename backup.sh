@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ###############################################################################
-# Content Reach Hub - Database Backup Script
+# Limitless Studio - Database Backup Script
 #
 # This script creates a backup of the PostgreSQL database and optionally
 # uploads it to a remote location for disaster recovery.
@@ -16,7 +16,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Configuration
-BACKUP_DIR="/opt/content-reach-hub/backups"
+BACKUP_DIR="/opt/limitless-studio/backups"
 COMPOSE_FILE="docker-compose.prod.yml"
 RETENTION_DAYS=30
 
@@ -26,7 +26,7 @@ if [ -f .env.production ]; then
 fi
 
 POSTGRES_USER="${POSTGRES_USER:-postgres}"
-POSTGRES_DB="${POSTGRES_DB:-content_reach_hub}"
+POSTGRES_DB="${POSTGRES_DB:-limitless_studio}"
 
 # Functions
 log_info() {
@@ -155,7 +155,7 @@ show_usage() {
     echo "Examples:"
     echo "  $0 backup"
     echo "  $0 list"
-    echo "  $0 restore /opt/content-reach-hub/backups/db_backup_20250101_120000.sql.gz"
+    echo "  $0 restore /opt/limitless-studio/backups/db_backup_20250101_120000.sql.gz"
 }
 
 # Main execution
