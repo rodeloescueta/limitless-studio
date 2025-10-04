@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useUserTeams } from '@/lib/hooks/useTeams'
+import { useAgencyMembers } from '@/lib/hooks/useAssignments'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Loader2 } from 'lucide-react'
 
@@ -16,25 +16,17 @@ interface TeamMember {
   firstName: string
   lastName: string
   email: string
-  avatar?: string
+  avatar?: string | null
 }
 
 export function MentionPicker({ query, onSelect, onClose }: MentionPickerProps) {
   const [selectedIndex, setSelectedIndex] = useState(0)
-  const { data: teams = [], isLoading } = useUserTeams()
 
-  // Extract all team members from all teams
-  const allMembers: TeamMember[] = teams.flatMap(team =>
-    (team as any).members?.map((member: any) => member.user) || []
-  )
-
-  // Remove duplicates based on user ID
-  const uniqueMembers = allMembers.filter((member, index, array) =>
-    array.findIndex(m => m.id === member.id) === index
-  )
+  // Use agency members instead of team-specific members (agency-centric model)
+  const { data: agencyMembers = [], isLoading } = useAgencyMembers()
 
   // Filter members based on query
-  const filteredMembers = uniqueMembers.filter(member => {
+  const filteredMembers = agencyMembers.filter((member: TeamMember) => {
     const fullName = `${member.firstName} ${member.lastName}`.toLowerCase()
     const email = member.email.toLowerCase()
     const searchQuery = query.toLowerCase()

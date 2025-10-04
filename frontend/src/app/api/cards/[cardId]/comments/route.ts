@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { comments, commentMentions, users } from '@/lib/db/schema'
+import { comments, commentMentions, users, contentCards } from '@/lib/db/schema'
 import { eq, desc } from 'drizzle-orm'
 import { z } from 'zod'
 import { enqueueNotification } from '@/lib/queue'
@@ -96,6 +96,14 @@ export async function POST(
 
       const userName = currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : 'Someone'
 
+      // Get the card details for context
+      const [card] = await db
+        .select({ title: contentCards.title })
+        .from(contentCards)
+        .where(eq(contentCards.id, cardId))
+
+      const cardTitle = card?.title || 'a card'
+
       for (const mentionedUserId of validatedData.mentions) {
         // Create mention record
         await db.insert(commentMentions).values({
@@ -111,7 +119,7 @@ export async function POST(
           cardId: cardId,
           commentId: newComment.id,
           title: 'You were mentioned in a comment',
-          message: `${userName} mentioned you in a comment`,
+          message: `${userName} mentioned you in a comment on "${cardTitle}"`,
           slackEnabled: true,
         })
       }
