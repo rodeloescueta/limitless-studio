@@ -1,8 +1,20 @@
 import { withAuth } from 'next-auth/middleware'
+import { NextResponse } from 'next/server'
 
 export default withAuth(
   function middleware(req) {
-    // Add any additional middleware logic here
+    const token = req.nextauth.token
+    const pathname = req.nextUrl.pathname
+
+    // Redirect first-time users to change password page
+    if (token?.isFirstLogin && pathname !== '/auth/change-password') {
+      return NextResponse.redirect(new URL('/auth/change-password', req.url))
+    }
+
+    // Prevent already-initialized users from accessing change password page
+    if (!token?.isFirstLogin && pathname === '/auth/change-password') {
+      return NextResponse.redirect(new URL('/dashboard', req.url))
+    }
   },
   {
     callbacks: {
@@ -12,5 +24,5 @@ export default withAuth(
 )
 
 export const config = {
-  matcher: ['/dashboard/:path*']
+  matcher: ['/dashboard/:path*', '/auth/change-password']
 }

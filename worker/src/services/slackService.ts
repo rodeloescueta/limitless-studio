@@ -27,8 +27,13 @@ export async function sendSlackNotification(data: SlackNotificationData) {
     ? `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/dashboard`
     : null
 
+  // Add development environment prefix
+  const isDevelopment = process.env.NODE_ENV === 'development'
+  const titlePrefix = isDevelopment ? '🧪 [TEST - Please Ignore] ' : ''
+  const messagePrefix = isDevelopment ? '_This is a test notification from the development environment._\n\n' : ''
+
   const payload = {
-    text: data.title,
+    text: titlePrefix + data.title,
     attachments: [
       {
         color: SLACK_COLORS[data.type] || '#6b7280',
@@ -37,7 +42,7 @@ export async function sendSlackNotification(data: SlackNotificationData) {
             type: 'section',
             text: {
               type: 'mrkdwn',
-              text: `*${data.title}*\n${data.message}`,
+              text: `*${titlePrefix}${data.title}*\n${messagePrefix}${data.message}`,
             },
           },
           ...(cardLink

@@ -17,6 +17,20 @@ export function useTeamMembers(teamId: string) {
   })
 }
 
+// Get all Main Agency Team members (agency-centric model)
+export function useAgencyMembers() {
+  return useQuery({
+    queryKey: ['agency-members'],
+    queryFn: async () => {
+      // Fetch members from the Main Agency Team (non-client team)
+      const response = await fetch('/api/teams/agency/members')
+      if (!response.ok) throw new Error('Failed to fetch agency members')
+
+      return response.json()
+    },
+  })
+}
+
 export function useAssignUser() {
   const queryClient = useQueryClient()
 

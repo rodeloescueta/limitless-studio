@@ -78,6 +78,7 @@ export function AppSidebarNew() {
   const pathname = usePathname()
   const { data: session } = useSession()
   const userRole = session?.user?.role || 'member'
+  const [unreadCount, setUnreadCount] = React.useState(0)
 
   const filteredMainMenu = mainMenuItems.filter(item =>
     item.roles.includes(userRole)
@@ -86,6 +87,27 @@ export function AppSidebarNew() {
   const filteredSettingsMenu = settingsMenuItems.filter(item =>
     item.roles.includes(userRole)
   )
+
+  // Fetch unread notification count
+  React.useEffect(() => {
+    const fetchUnreadCount = async () => {
+      try {
+        const response = await fetch('/api/notifications/unread-count')
+        if (response.ok) {
+          const data = await response.json()
+          setUnreadCount(data.count || 0)
+        }
+      } catch (error) {
+        console.error('Failed to fetch unread count:', error)
+      }
+    }
+
+    fetchUnreadCount()
+
+    // Poll every 30 seconds for new notifications
+    const interval = setInterval(fetchUnreadCount, 30000)
+    return () => clearInterval(interval)
+  }, [])
 
   return (
     <Sidebar collapsible="icon">
@@ -142,6 +164,11 @@ export function AppSidebarNew() {
                     }}>
                       <item.icon />
                       <span>{item.title}</span>
+                      {item.title === 'Notifications' && unreadCount > 0 && (
+                        <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                          {unreadCount > 9 ? '9+' : unreadCount}
+                        </span>
+                      )}
                     </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

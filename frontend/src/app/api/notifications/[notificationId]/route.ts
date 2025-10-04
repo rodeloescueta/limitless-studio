@@ -5,8 +5,8 @@ import { db } from '@/lib/db'
 import { notifications } from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
 
-// PUT /api/notifications/[notificationId] - Mark notification as read
-export async function PUT(
+// PATCH /api/notifications/[notificationId] - Mark notification as read/unread
+export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ notificationId: string }> }
 ) {
@@ -18,6 +18,8 @@ export async function PUT(
     }
 
     const { notificationId } = await params
+    const body = await request.json()
+    const { isRead } = body
 
     // Find the notification first to verify ownership
     const notification = await db
@@ -35,10 +37,10 @@ export async function PUT(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    // Mark as read
+    // Update notification
     const updatedNotification = await db
       .update(notifications)
-      .set({ isRead: true })
+      .set({ isRead: isRead ?? true })
       .where(eq(notifications.id, notificationId))
       .returning()
 
@@ -46,7 +48,7 @@ export async function PUT(
 
   } catch (error) {
     console.error('Error updating notification:', error)
-    
+
 return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

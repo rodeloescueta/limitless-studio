@@ -34,7 +34,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Skeleton } from '@/components/ui/skeleton'
 import { UserPicker } from './UserPicker'
 import { AssigneeList } from './AssigneeList'
-import { useCardAssignments, useTeamMembers, useAssignUser, useUnassignUser, useUpdateAssignment } from '@/lib/hooks/useAssignments'
+import { useCardAssignments, useAgencyMembers, useAssignUser, useUnassignUser, useUpdateAssignment } from '@/lib/hooks/useAssignments'
 import { toast } from 'sonner'
 
 const createAssignmentSchema = z.object({
@@ -56,7 +56,8 @@ export function AssignmentPanel({ cardId, teamId, readonly = false }: Assignment
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
   const { data: assignments = [], isLoading: assignmentsLoading } = useCardAssignments(cardId)
-  const { data: teamMembers = [], isLoading: membersLoading } = useTeamMembers(teamId)
+  // Use agency members instead of team-specific members (agency-centric model)
+  const { data: teamMembers = [], isLoading: membersLoading } = useAgencyMembers()
   const assignUser = useAssignUser()
   const unassignUser = useUnassignUser()
   const updateAssignment = useUpdateAssignment()
