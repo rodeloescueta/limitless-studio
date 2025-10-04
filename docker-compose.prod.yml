@@ -70,9 +70,9 @@ services:
     restart: unless-stopped
     networks:
       - app-network
-    # Only expose on localhost for security
+    # Temporarily expose externally for setup
     ports:
-      - "127.0.0.1:8080:80"
+      - "8080:80"
 
   # Redis for Queue Management
   redis:

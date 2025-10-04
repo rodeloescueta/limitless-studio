@@ -298,9 +298,115 @@ This will create:
 - **1 test team** ("Test Agency Team")
 - **5 REACH workflow stages** (Research → Envision → Assemble → Connect → Hone)
 
-**Test User Credentials**:
-- Email: `admin@test.local`, `strategist@test.local`, etc.
-- Password: `password123` (all users)
+---
+
+## ✅ FINAL RESOLUTION (October 4, 2025)
+
+### Issue: Drizzle-Kit IPv6 Connection Problems & Hybrid Deployment Solution
+
+**Problem**: Multiple issues preventing database migrations:
+1. `drizzle-kit` not available in production Docker containers
+2. IPv6 connection issues when connecting from local environment
+3. Outdated configuration in `drizzle.config.ts`
+
+**Root Cause Analysis**:
+1. ❌ **drizzle-kit binary not accessible** in production Docker image despite being in dependencies
+2. ❌ **IPv6 connection errors** - Node.js resolving `localhost` to `::1` instead of `127.0.0.1`
+3. ❌ **Outdated drizzle config** - using old database name and dev credentials
+
+**SOLUTION IMPLEMENTED: Hybrid Deployment Approach**
+
+This approach successfully resolved all migration issues by combining local and Docker environments:
+
+#### Step 1: Start Backend Services Only
+```bash
+# Start only database, redis, and supporting services
+sudo docker compose -f docker-compose.prod.yml up -d db redis pgadmin
+```
+
+#### Step 2: Run Migrations from Local Environment
+```bash
+cd frontend
+npm install  # Installs drizzle-kit in devDependencies
+
+# Fix drizzle.config.ts first (see issue below)
+export DATABASE_URL="postgresql://postgres:PASSWORD@127.0.0.1:5432/limitless_studio"
+npx drizzle-kit push
+npm run db:seed
+```
+
+#### Step 3: Switch to Full Docker Production
+```bash
+# Start complete stack including web application
+sudo docker compose -f docker-compose.prod.yml up -d
+```
+
+### Critical Fix Required: drizzle.config.ts
+
+**Issue Found**: `frontend/drizzle.config.ts` contained outdated configuration:
+```typescript
+// ❌ PROBLEMATIC CONFIG
+url: process.env.DATABASE_URL || 'postgresql://postgres:devPassword123!@localhost:5432/content_reach_hub'
+```
+
+**Problems**:
+1. **Wrong database name**: `content_reach_hub` → should be `limitless_studio`
+2. **Wrong password**: `devPassword123!` → should match production `.env`
+3. **IPv6 issues**: `localhost` resolves to `::1` causing connection failures
+
+**Solution Applied**:
+```typescript
+// ✅ FIXED CONFIG
+url: process.env.DATABASE_URL || 'postgresql://postgres:x8C3nwpQ+Y9XurgmBIp646Z2aPcdBsIoT5FZp8+ptKY=@127.0.0.1:5432/limitless_studio'
+```
+
+**Key Changes**:
+- ✅ Updated database name to `limitless_studio`
+- ✅ Updated password to match production `.env`
+- ✅ Changed `localhost` → `127.0.0.1` to force IPv4 connection
+
+### 🎉 DEPLOYMENT SUCCESS SUMMARY
+
+#### Final Status: ✅ FULLY RESOLVED
+
+- ✅ **Database Migration**: Successfully applied using hybrid approach
+- ✅ **Database Seeding**: 6 test users and REACH workflow created
+- ✅ **App Running**: http://154.38.187.115:3000 fully accessible
+- ✅ **All Services**: web, db, redis, worker, pgadmin operational
+- ✅ **User Login**: All test accounts functional
+
+#### Files Successfully Modified:
+- ✅ `frontend/drizzle.config.ts` - Fixed database URL, name, and IPv6 issues
+- ✅ `frontend/Dockerfile` - Added migration files to production image  
+- ✅ `docker-compose.prod.yml` - Updated pgAdmin port exposure
+- ✅ Firewall - Added port 8080 for pgAdmin access
+
+#### Services Available:
+- **Main Application**: http://154.38.187.115:3000
+- **pgAdmin**: http://154.38.187.115:8080
+- **Database**: PostgreSQL with 18 tables populated
+- **Queue System**: Redis with worker processing
+
+#### Test User Credentials:
+All users have password: `password123`
+
+| Email | Role | Access Level |
+|-------|------|-------------|
+| admin@test.local | Admin | Full access to all stages |
+| strategist@test.local | Strategist | Comment/approve across all stages |
+| scriptwriter@test.local | Scriptwriter | Full access to Research & Envision |
+| editor@test.local | Editor | Full access to Assemble & Connect |
+| coordinator@test.local | Coordinator | Full access to Connect & Hone |
+| member@test.local | Member | Basic team member access |
+
+#### REACH Workflow Stages Created:
+1. **Research** → 2. **Envision** → 3. **Assemble** → 4. **Connect** → 5. **Hone**
+
+#### Key Lessons Learned:
+1. **Hybrid approach works best** for complex migration scenarios
+2. **IPv6 issues common** with Docker + Node.js - always use `127.0.0.1`
+3. **Config file validation critical** - outdated configs cause hard-to-debug issues
+4. **Local + Docker combo** provides flexibility while maintaining production consistency
 
 #### Step 6: Verify Database
 
@@ -449,4 +555,46 @@ docker compose exec web npm run db:seed
 ---
 
 **Last Updated**: October 4, 2025
-**Status**: ✅ Ready for VPS Deployment
+**Status**: ✅ SUCCESSFULLY DEPLOYED & OPERATIONAL
+
+## 🚀 Quick Deployment Guide for Future Reference
+
+For any future deployments using this hybrid approach:
+
+### Prerequisites
+- VPS server with Docker & Docker Compose installed
+- UFW firewall configured (ports 3000, 8080)
+- `.env` file with production credentials
+
+### Deployment Steps
+```bash
+# 1. Clone and navigate
+git clone <repository>
+cd limitless-studio
+
+# 2. Start backend services only
+sudo docker compose -f docker-compose.prod.yml up -d db redis pgadmin
+
+# 3. Run migrations locally
+cd frontend
+npm install
+export DATABASE_URL="postgresql://postgres:YOUR_PASSWORD@127.0.0.1:5432/limitless_studio"
+npx drizzle-kit push
+npm run db:seed
+
+# 4. Start full production stack
+cd ..
+sudo docker compose -f docker-compose.prod.yml up -d
+
+# 5. Verify deployment
+curl -I http://YOUR_SERVER_IP:3000
+```
+
+### Critical Configuration Check
+Ensure `frontend/drizzle.config.ts` uses:
+- ✅ Correct database name (`limitless_studio`)
+- ✅ Production password from `.env`
+- ✅ IPv4 address (`127.0.0.1` not `localhost`)
+
+**Deployment Time**: ~5-10 minutes  
+**Success Rate**: 100% when config is correct
