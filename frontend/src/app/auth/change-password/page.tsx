@@ -53,6 +53,7 @@ function ChangePasswordForm() {
     if (!isPasswordValid) {
       setError('Please meet all password requirements')
       setIsLoading(false)
+
       return
     }
 

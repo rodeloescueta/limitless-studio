@@ -29,6 +29,7 @@ export async function GET() {
     return NextResponse.json({ count })
   } catch (error) {
     console.error('Error fetching unread count:', error)
+
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
